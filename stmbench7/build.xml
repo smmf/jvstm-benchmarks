@@ -1,0 +1,97 @@
+<?xml version="1.0"?>
+<project name="stmbench7" default="compile" basedir=".">
+
+	<property name="version" value="07.03.2008-beta" />
+	<property name="build.dir" location="classes"/>
+	<property name="java.src.dir" location="src"/>
+	<property name="lib.dir" location="lib"/>
+
+	<property name="dist.dir" value="dist" />
+	
+	<property name="benchname" value="stmbench7-${version}" />
+
+	<path id="project.class.path">
+		<pathelement path="${build.dir}"/>
+		<fileset dir="${lib.dir}">
+			<include name="**/*.jar"/>
+		</fileset>
+	</path>
+
+	<target name="init" >
+		<mkdir dir="${build.dir}"/>
+	</target>
+
+	<target name="clean-all" description="Removes any generated files">
+		<delete dir="${build.dir}"/>
+	</target>
+
+	<target name="compile" depends="init" description="Compiles all the source code">
+		<javac destdir="${build.dir}" extdirs="${lib.dir}" debug="true" 	deprecation="true" debuglevel="lines,vars,source">
+			<compilerarg value="-Xlint:unchecked"/>
+			<src path="${java.src.dir}"/>
+			<exclude name="stmbench7/test/**/*.java" />
+			<classpath refid="project.class.path"/>
+		</javac>
+	</target>
+	
+	<target name="jar" depends="compile">
+		<jar basedir="${build.dir}" destfile="${benchname}.jar">
+			<manifest>
+				<attribute name="Main-Class" value="stmbench7.Benchmark" />
+			</manifest>
+		</jar>
+	</target>
+
+	<target name="-run" depends="compile">
+		<java classname="${className}" fork="true">
+			<classpath refid="project.class.path"/>
+			<jvmarg value="-Xms8192m" />
+			<jvmarg value="-Xmx12040m" />
+			<arg line="${extraArgs}"/>
+		</java>
+	</target>
+
+	<target name="run-locks">
+		<antcall target="-run">
+			<param name="className" value="stmbench7.Benchmark"/>
+			<param name="extraArgs" value="${args}"/>
+		</antcall>
+	</target>
+
+	<target name="run-stm">
+		<antcall target="-run">
+			<param name="className" value="stmbench7.Benchmark"/>
+			<param name="extraArgs" value="${args} -g stm -s stmbench7.impl.jvstm.SynchMethodInitializerJVSTM"/>
+		</antcall>
+	</target>
+
+	<target name="run-memo" depends="compile">
+		<java classname="pt.ist.atom.asm.ProcessMemoAnnotations" 
+			dir="${build.dir}"
+			fork="true">
+			<classpath refid="project.class.path"/>
+			<arg value="${build.dir}"/>
+		</java>
+	
+		<antcall target="-run">
+			<param name="className" value="stmbench7.Benchmark"/>
+			<param name="extraArgs" value="${args} -g stm -s stmbench7.impl.memo.SynchMethodInitializerMEMO"/>
+		</antcall>
+	</target>
+
+	<target name="dist" depends="jar">
+		<mkdir dir="${dist.dir}/${benchname}" />
+		<copy todir="${dist.dir}/${benchname}">
+			<fileset dir=".">
+				<include name="${java.src.dir}/**/*.java" />
+				<include name="build.xml" />
+				<include name="README" />
+				<include name="LICENSE" />
+				<include name="FILES" />
+				<include name="stmbench7-${version}.jar" />
+			</fileset>
+		</copy>
+		<tar basedir="${dist.dir}" compression="gzip" destfile="${benchname}.tgz" />
+		<delete dir="${dist.dir}" />
+	</target>
+</project>

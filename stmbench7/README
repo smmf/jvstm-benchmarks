@@ -1,0 +1,54 @@
+1. STMBench7 - Introduction
+----------------------------------------------------------------------
+
+STMBench7 is a benchmark for evaluating software transactional memory
+(STM) implementations. For documentation, please refer to the project
+web page: 
+
+    http://lpd.epfl.ch/site/research/tmeval
+    
+Important note. The benchmark is still a work in progress. The code
+and the specification may still undergo many, maybe significant,
+changes that should reflect the feedback we will get.
+    
+Any suggestions, comments or criticism are more than welcome and
+should be send to Michal Kapalka (e-mail: firstname.lastname@epfl.ch).
+    
+    
+2. Running the Benchmark
+----------------------------------------------------------------------
+
+The Java version of the benchmark requires JRE 1.5 or newer. The
+JAR file provided with the default benchmark distribution contains
+all the necessary binary files to run the benchmark.
+
+For example,
+
+	java -jar stmbench7-07.03.2008-beta.jar
+	
+will run the current version of the benchmark with the default
+parameters (shown at the beginning of a benchmark run). To see the
+command-line syntax, run the benchmark with the "-h" or "--help"
+argument.
+
+Note that the benchmark requires a lot of memory, so it may be
+necessary to increase the JVM heap size (with the "-Xmx" parameter
+of the "java" program).
+
+3. Compiling the Benchmark
+----------------------------------------------------------------------
+
+The build system of the benchmark now uses Apache Ant. The Ant targets
+provided are: "compile" (to compile the benchmark), "jar" (to generate
+a JAR file), and "dist" (to make a tgz archive for distribution). For
+example,
+
+	ant jar
+	
+will compile the benchmark and generate the JAR file. JDK 1.5 or
+newer is required to build the benchmark from sources.
+
+It is simple, however, to compile the benchmark using only "javac", 
+by compiling together all the Java files in the "src" directory,
+except ones in the "test" subdirectory (those require JUnit and
+can be compiled separately).
