@@ -6,6 +6,9 @@
 	<property name="java.src.dir" location="src"/>
 	<property name="lib.dir" location="lib"/>
 
+	<property name="MIN_HEAP" value="2G"/>
+	<property name="MAX_HEAP" value="3G"/>
+
 	<property name="dist.dir" value="dist" />
 	
 	<property name="benchname" value="stmbench7-${version}" />
@@ -17,7 +20,7 @@
 		</fileset>
 	</path>
 
-	<target name="init" >
+	<target name="-init" >
 		<mkdir dir="${build.dir}"/>
 	</target>
 
@@ -25,15 +28,28 @@
 		<delete dir="${build.dir}"/>
 	</target>
 
-	<target name="compile" depends="init" description="Compiles all the source code">
-		<javac destdir="${build.dir}" extdirs="${lib.dir}" debug="true" 	deprecation="true" debuglevel="lines,vars,source">
+	<target name="compile" depends="-init, -libs" description="Compiles all the source code">
+		<antcall target="-compile-libs"/>
+		<antcall target="-compile-no-libs"/>
+	</target>
+
+	<target name="-compile-libs" if="jvstm.present">
+		<javac destdir="${build.dir}" extdirs="${lib.dir}" debug="true"	deprecation="true" debuglevel="lines,vars,source">
 			<compilerarg value="-Xlint:unchecked"/>
 			<src path="${java.src.dir}"/>
 			<exclude name="stmbench7/test/**/*.java" />
 			<classpath refid="project.class.path"/>
 		</javac>
 	</target>
+
+	<target name="-compile-no-libs" unless="jvstm.present">
+		<fail message="jvstm.jar not found in libs dir: ${lib.dir}"/>
+	</target>
 	
+	<target name="-libs"> 
+		<available file="${lib.dir}/jvstm.jar" property="jvstm.present"/>
+	</target>
+
 	<target name="jar" depends="compile">
 		<jar basedir="${build.dir}" destfile="${benchname}.jar">
 			<manifest>
@@ -42,56 +58,50 @@
 		</jar>
 	</target>
 
-	<target name="-run" depends="compile">
-		<java classname="${className}" fork="true">
+	<target name="-run" depends="compile, -testArgs">
+		<antcall target="-run-args"/>
+		<antcall target="-run-no-args"/>
+	</target>
+
+	<target name="-testArgs">
+		<condition property="args.set">
+      			<not><equals arg1="${args}" arg2="$${args}"/></not>
+		</condition>
+	</target>
+
+	<target name="-run-args" if="args.set">
+		<java classname="stmbench7.Benchmark" fork="true">
 			<classpath refid="project.class.path"/>
-			<jvmarg value="-Xms8192m" />
-			<jvmarg value="-Xmx12040m" />
-			<arg line="${extraArgs}"/>
+			<jvmarg value="-Xms${MIN_HEAP}" />
+			<jvmarg value="-Xmx${MAX_HEAP}" />
+			<arg line="${synch} ${args}"/>
 		</java>
 	</target>
 
-	<target name="run-locks">
-		<antcall target="-run">
-			<param name="className" value="stmbench7.Benchmark"/>
-			<param name="extraArgs" value="${args}"/>
-		</antcall>
-	</target>
-
-	<target name="run-stm">
-		<antcall target="-run">
-			<param name="className" value="stmbench7.Benchmark"/>
-			<param name="extraArgs" value="${args} -g stm -s stmbench7.impl.jvstm.SynchMethodInitializerJVSTM"/>
-		</antcall>
-	</target>
-
-	<target name="run-memo" depends="compile">
-		<java classname="pt.ist.atom.asm.ProcessMemoAnnotations" 
-			dir="${build.dir}"
-			fork="true">
+	<target name="-run-no-args" unless="args.set">		
+		<java classname="stmbench7.Benchmark" fork="true">
 			<classpath refid="project.class.path"/>
-			<arg value="${build.dir}"/>
+			<jvmarg value="-Xms${MIN_HEAP}" />
+			<jvmarg value="-Xmx${MAX_HEAP}" />
+			<arg line="${synch}"/>
 		</java>
-	
+	</target>
+
+	<target name="run-coarse" description="Runs the benchmark with coarse-grained locking">
 		<antcall target="-run">
-			<param name="className" value="stmbench7.Benchmark"/>
-			<param name="extraArgs" value="${args} -g stm -s stmbench7.impl.memo.SynchMethodInitializerMEMO"/>
+			<param name="synch" value="-g coarse"/>
 		</antcall>
 	</target>
 
-	<target name="dist" depends="jar">
-		<mkdir dir="${dist.dir}/${benchname}" />
-		<copy todir="${dist.dir}/${benchname}">
-			<fileset dir=".">
-				<include name="${java.src.dir}/**/*.java" />
-				<include name="build.xml" />
-				<include name="README" />
-				<include name="LICENSE" />
-				<include name="FILES" />
-				<include name="stmbench7-${version}.jar" />
-			</fileset>
-		</copy>
-		<tar basedir="${dist.dir}" compression="gzip" destfile="${benchname}.tgz" />
-		<delete dir="${dist.dir}" />
+	<target name="run-medium" description="Runs the benchmark with medium-grained locking">
+		<antcall target="-run">
+			<param name="synch" value="-g medium"/>
+		</antcall>
+	</target>
+
+	<target name="run-jvstm" description="Runs the benchmark with the jvstm">
+		<antcall target="-run">
+			<param name="synch" value="-g stm -s stmbench7.impl.jvstm.SynchMethodInitializerJVSTM"/>
+		</antcall>
 	</target>
 </project>
