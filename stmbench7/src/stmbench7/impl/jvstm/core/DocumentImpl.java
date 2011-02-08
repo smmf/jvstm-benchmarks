@@ -6,14 +6,14 @@ import stmbench7.core.Document;
 
 public class DocumentImpl implements Document {
 
-	private final VBox<Integer> id;
-	private final VBox<String> title;
+	private final int id;
+	private final String title;
 	private final VBox<String> text;
 	private final VBox<CompositePart> part;
 
 	public DocumentImpl(int id, String title, String text) {
-		this.id = new VBox<Integer>(id);
-		this.title = new VBox<String>(title);
+		this.id = id;
+		this.title = title;
 		this.text = new VBox<String>(text);
 		this.part = new VBox<CompositePart>();
 	}
@@ -36,14 +36,15 @@ public class DocumentImpl implements Document {
 	}
 
 	public int getDocumentId() {
-		return id.get();
+		return id;
 	}
 
 	public String getTitle() {
-		return title.get();
+		return title;
 	}
 
 	public void nullOperation() {
+	    /* Empty */
 	}
 
 	public int searchText(char symbol) {

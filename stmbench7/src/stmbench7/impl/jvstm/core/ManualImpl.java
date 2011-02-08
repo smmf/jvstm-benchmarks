@@ -6,14 +6,14 @@ import stmbench7.core.Module;
 
 public class ManualImpl implements Manual {
 
-	private final VBox<Integer> id;
-	private final VBox<String> title;
+	private final int id;
+	private final String title;
 	private final VBox<String> text;
 	private final VBox<Module> module;
 
 	public ManualImpl(int id, String title, String text) {
-		this.id = new VBox<Integer>(id);
-		this.title = new VBox<String>(title);
+		this.id = id;
+		this.title = title;
 		this.text = new VBox<String>(text);
 		this.module = new VBox<Module>();
 	}
@@ -62,7 +62,7 @@ public class ManualImpl implements Manual {
 	}
 
 	public int getId() {
-		return id.get();
+		return id;
 	}
 
 	public Module getModule() {
@@ -74,7 +74,7 @@ public class ManualImpl implements Manual {
 	}
 
 	public String getTitle() {
-		return title.get();
+		return title;
 	}
 
 }

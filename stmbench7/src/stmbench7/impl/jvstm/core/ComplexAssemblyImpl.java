@@ -14,7 +14,7 @@ import stmbench7.impl.jvstm.backend.SmallSetImpl;
 public class ComplexAssemblyImpl extends AssemblyImpl implements ComplexAssembly {
 
 	private final VBox<SmallSetImpl<Assembly>> subAssemblies;
-	private final VBox<Short> level; 
+	private final short level; 
 
 	public ComplexAssemblyImpl(int id, String type, int buildDate, Module module, ComplexAssembly superAssembly) {
 		super(id, type, buildDate, module, superAssembly);
@@ -22,9 +22,9 @@ public class ComplexAssemblyImpl extends AssemblyImpl implements ComplexAssembly
 		subAssemblies = new VBox<SmallSetImpl<Assembly>>(new SmallSetImpl<Assembly>());
 
 		if(superAssembly == null)
-			level = new VBox<Short>((short) Parameters.NumAssmLevels);
+			level = (short) Parameters.NumAssmLevels;
 		else 
-			level = new VBox<Short>((short)(superAssembly.getLevel() - 1));
+			level = (short)(superAssembly.getLevel() - 1);
 	}
 
 	public ComplexAssemblyImpl(ComplexAssemblyImpl source) {
@@ -34,7 +34,7 @@ public class ComplexAssemblyImpl extends AssemblyImpl implements ComplexAssembly
 	}
 
 	public boolean addSubAssembly(Assembly assembly) {
-		if(assembly instanceof BaseAssembly && level.get() != 2)
+		if(assembly instanceof BaseAssembly && level != 2)
 			throw new RuntimeError("ComplexAssembly.addAssembly: BaseAssembly at wrong level!");
 
 		boolean notAddedBefore = subAssemblies.get().add(assembly);
@@ -50,7 +50,7 @@ public class ComplexAssemblyImpl extends AssemblyImpl implements ComplexAssembly
 	}
 
 	public short getLevel() {
-		return level.get();
+		return level;
 	}
 
 	@Override

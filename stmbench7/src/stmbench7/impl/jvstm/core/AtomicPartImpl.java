@@ -84,7 +84,7 @@ public class AtomicPartImpl extends DesignObjImpl implements AtomicPart {
 	}
 
 	public int compareTo(AtomicPart part) {
-		return id.get() - part.getId();
+		return id - part.getId();
 	}
 
 }

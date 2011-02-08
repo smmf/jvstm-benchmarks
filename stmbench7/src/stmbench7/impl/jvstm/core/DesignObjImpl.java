@@ -5,13 +5,13 @@ import stmbench7.core.DesignObj;
 
 public class DesignObjImpl implements DesignObj{
 
-	protected final VBox<Integer> id;
-	protected final VBox<String> type;
-	protected final VBox<Integer> buildDate;
+	protected final int id;
+	private final String type;
+	private final VBox<Integer> buildDate;
 
 	public DesignObjImpl(int id, String type, int buildDate) {
-		this.id = new VBox<Integer>(id);
-		this.type = new VBox<String>(type);
+		this.id = id;
+		this.type = type;
 		this.buildDate = new VBox<Integer>(buildDate);
 	}
 
@@ -21,7 +21,7 @@ public class DesignObjImpl implements DesignObj{
 	}
 
 	public int getId() {
-		return id.get();
+		return id;
 	}
 
 	public int getBuildDate() {
@@ -40,7 +40,7 @@ public class DesignObjImpl implements DesignObj{
 	}
 
 	public String getType() {
-		return type.get();
+		return type;
 	}
 
 

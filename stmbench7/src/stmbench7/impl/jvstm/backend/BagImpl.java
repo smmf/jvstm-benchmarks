@@ -3,7 +3,6 @@ package stmbench7.impl.jvstm.backend;
 import java.util.Iterator;
 
 import jvstm.VBox;
-import jvstm.VBoxInt;
 import jvstm.util.Cons;
 import stmbench7.annotations.ContainedInAtomic;
 
@@ -12,7 +11,6 @@ public class BagImpl<E> implements Iterable<E> {
 
 	@SuppressWarnings("unchecked")
 	protected final VBox<Cons<E>> elements = new VBox<Cons<E>>((Cons<E>)Cons.empty());
-	protected final VBoxInt size = new VBoxInt(0);
 
 	public BagImpl() {
 	}
@@ -24,7 +22,6 @@ public class BagImpl<E> implements Iterable<E> {
 	
 	public boolean add(E element) {
 		elements.put(elements.get().cons(element));
-		size.inc();
 		return true;
 	}
 
@@ -36,13 +33,8 @@ public class BagImpl<E> implements Iterable<E> {
 			return false;
 		} else {
 			elements.put(newElems);
-			size.dec();
 			return true;
 		}
-	}
-
-	public int size() {
-		return size.getInt();
 	}
 
 	// Iterable<E> methods

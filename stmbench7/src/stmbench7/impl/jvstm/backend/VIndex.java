@@ -118,8 +118,8 @@ public class VIndex<K extends IndexKey,V> implements Index<K,V> {
 	}
 
 	static class Entry<K extends IndexKey,V> implements Comparable<Entry<K,V>> {
-		private K key;
-		private V value;
+		private final K key;
+		private final V value;
 
 		Entry(K key, V value) {
 			this.key = key;

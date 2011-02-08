@@ -1,7 +1,8 @@
 package stmbench7.impl.jvstm.backend;
 
+import java.util.ArrayList;
 import java.util.Iterator;
-import java.util.LinkedList;
+import java.util.List;
 
 import stmbench7.backend.ImmutableCollection;
 
@@ -10,10 +11,10 @@ import stmbench7.backend.ImmutableCollection;
  */
 public class ImmutableCollectionImpl<E> implements ImmutableCollection<E> {
 
-	private final LinkedList<E> snapshot;
+	private final List<E> snapshot;
 	
 	public ImmutableCollectionImpl(Iterable<E> elements) {
-		snapshot = new LinkedList<E>();
+		snapshot = new ArrayList<E>();
 		for(E element : elements) snapshot.add(element);
 	}
 

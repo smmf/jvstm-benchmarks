@@ -1,6 +1,5 @@
 package stmbench7.impl.jvstm.core;
 
-import jvstm.VBox;
 import stmbench7.core.AtomicPart;
 import stmbench7.core.Connection;
 
@@ -10,35 +9,34 @@ import stmbench7.core.Connection;
  */
 public class ConnectionImpl implements Connection {
 
-	protected final VBox<String> type;
-	protected final VBox<Integer> length;
-	protected final VBox<AtomicPart> from, to;
-	//private volatile int x;
+	private final String type;
+	private final int length;
+	private final AtomicPart from, to;
 
 	public ConnectionImpl(AtomicPart from, AtomicPart to, String type, int length) {
-		this.type = new VBox<String>(type);
-		this.length = new VBox<Integer>(length);
-		this.from = new VBox<AtomicPart>(from);
-		this.to = new VBox<AtomicPart>(to);
+		this.type = type;
+		this.length = length;
+		this.from = from;
+		this.to = to;
 	}
 
 	public Connection getReversed() {
-		return new ConnectionImpl(to.get(), from.get(), new String(type.get()), length.get());
+		return new ConnectionImpl(to, from, new String(type), length);
 	}
 
 	public AtomicPart getSource() {
-		return from.get();
+		return from;
 	}
 
 	public AtomicPart getDestination() {
-		return to.get();
+		return to;
 	}
 
 	public int getLength() {
-		return length.get();
+		return length;
 	}
 
 	public String getType() {
-		return type.get();
+		return type;
 	}
 }

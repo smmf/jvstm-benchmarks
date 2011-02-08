@@ -7,8 +7,8 @@ import stmbench7.core.Module;
 
 public abstract class AssemblyImpl extends DesignObjImpl implements Assembly {
 
-	protected final VBox<ComplexAssembly> superAssembly;
-	protected final VBox<Module> module;
+	private final VBox<ComplexAssembly> superAssembly;
+	private final VBox<Module> module;
 
 	public AssemblyImpl(int id, String type, int buildDate, Module module, ComplexAssembly superAssembly) {
 		super(id, type, buildDate);
