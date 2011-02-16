@@ -239,7 +239,7 @@ public class Benchmark {
 				break;
 		}
 		try {
-			synchMethodInitializer = new stmbench7.impl.jvstm.SynchMethodInitializerJVSTM();
+			synchMethodInitializer = synchMethodInitializerClass.newInstance();
 		}
 		catch(Exception e) {
 			throw new BenchmarkParametersException("Error instantiating STM initializer class", e);
