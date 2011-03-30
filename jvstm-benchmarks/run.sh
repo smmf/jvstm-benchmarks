@@ -17,7 +17,7 @@ source ./jvstm-benchmarks.conf
 # if needed, set the default value for JVSTMS
 if [ -z "$JVSTMS" ]; then
     let pos=0;
-    for line in jvstms_go_in_here/*; do
+    for line in jvstms_go_in_here/*.jar; do
         JVSTMS[$pos]=`pwd`/$line
         let pos++
     done
@@ -65,5 +65,8 @@ for benchmark in $BENCHMARKS; do
     done
 done
 
-echo "Done with benchmarks. Results are in dir '$RESULTS'"
+echo
+echo "Done with benchmarks. Results are in dir '$RESULTS'."
+echo
+
 
