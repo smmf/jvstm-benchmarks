@@ -1,0 +1,45 @@
+<project name="lee-jvstm" default="compile" basedir=".">
+
+    <property name="src.dir" location="src"/>
+    <property name="build.dir" location="build"/>
+    <property name="run.mainclass" value="lee.LeeRouter"/>
+    <property name="run.args" value="1 txt/mainboard.txt"/>
+	
+    <target name="init">
+        <mkdir dir="${build.dir}"/>
+    </target>
+
+    <target name="clean-all" description="Delete the build directory" >
+        <delete dir="${build.dir}"/>
+    </target>
+
+    <target name="compile" depends="init" description="Compiles the source code" >
+    	
+
+        <javac srcdir="${src.dir}" destdir="${build.dir}">
+        	<classpath>
+        		<pathelement path="${classpath}"/>
+        	    <pathelement location="lib/jvstm.jar"/>
+        	</classpath>
+        	</javac>
+    </target>
+
+    <target name="show" description="Shows property values" >
+        <echo message="src.dir = ${src.dir}" />
+        <echo message="build.dir = ${build.dir}" />
+    </target>
+
+    <target name="run" depends="compile" description="Runs the program" >
+        <java classname="${run.mainclass}" fork="true">
+          <jvmarg value="-Xmx1024m"/>
+          <arg line="${run.args}" />
+            <classpath>
+                <pathelement location="${build.dir}"/>
+            	<pathelement path="."/>
+        		<pathelement path="${classpath}"/>
+            	<pathelement location="lib/jvstm.jar"/>
+            </classpath>
+        </java>
+    </target>
+	
+</project>

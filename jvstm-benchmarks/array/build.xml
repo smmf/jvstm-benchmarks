@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project basedir="." default="compile" name="A project to test many concurrent commits with potential conflict">
+  
+  <property name="src.dir" location="src"/>
+  <property name="src.gen.dir" location="src_gen"/>
+  <property name="java.src.dir" location="${src.dir}/java"/>
+  <property name="build.dir" location="classes"/>
+
+  <!-- The encoding of all the source files should be the same! -->
+  <property name="javac.encoding" value="UTF-8"/>
+
+  <!-- java.file.encoding should match your terminal's encoding -->
+  <property name="java.file.encoding" value="UTF-8"/>
+
+
+  <path id="project.class.path">
+    <pathelement path="${build.dir}"/>
+    <fileset dir="lib">
+      <include name="**/*.jar"/>
+    </fileset>
+  </path>
+
+  <target name="clean-all" description="Removes any generated files">
+    <delete dir="${build.dir}"/>
+    <delete dir="${src.gen.dir}"/>
+  </target>
+
+  <target name="compile" description="Compiles all the source code">
+    <mkdir dir="${build.dir}"/>
+    <javac destdir="${build.dir}" target="1.5" debug="on" encoding="${javac.encoding}">
+      <src path="${java.src.dir}"/>
+<!--       <src path="${src.gen.dir}"/> -->
+      <classpath refid="project.class.path"/>
+    </javac>
+  </target>
+
+  <target name="run" depends="compile" description="runs the application">
+    <java classname="Main" fork="true">
+      <classpath refid="project.class.path"/>
+      <jvmarg value="-Dfile.encoding=${java.file.encoding}" />
+    </java>
+  </target>
+
+</project>
