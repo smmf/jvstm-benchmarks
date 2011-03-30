@@ -17,10 +17,14 @@ source ./jvstm-benchmarks.conf
 # if needed, set the default value for JVSTMS
 if [ -z "$JVSTMS" ]; then
     let pos=0;
-    for line in jvstms_go_in_here/*.jar; do
+    for line in `ls jvstms_go_in_here/*.jar`; do
         JVSTMS[$pos]=`pwd`/$line
         let pos++
     done
+fi
+if [ -z "$JVSTMS" ]; then
+    echo "I need at least one jar to run any benchmarks. Exiting."
+    exit
 fi
 # compute the JVSTMS basenames
 let pos=0
