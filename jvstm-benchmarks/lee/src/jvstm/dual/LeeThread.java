@@ -37,7 +37,7 @@ package jvstm.dual;
 import java.util.concurrent.Callable;
 
 import jvstm.ReadWriteTransaction;
-import jvstm.CommitStats;
+// import jvstm.CommitStats;
 import jvstm.util.Cons;
 
 /**
@@ -106,7 +106,7 @@ public class LeeThread extends Thread {
                 updateStatistics();
             }
         }
-	CommitStats.dumpToResults();
+	// CommitStats.dumpToResults();
     }
     
     

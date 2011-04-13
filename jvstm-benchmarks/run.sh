@@ -14,6 +14,7 @@ HELPER_SCRIPTS_DIR=`pwd`/"helper_applications"
 
 # process configuration
 source ./jvstm-benchmarks.conf
+JAVA_OPTS="$DEFAULT_JAVA_OPTS"
 # if needed, set the default value for JVSTMS
 if [ -z "$JVSTMS" ]; then
     let pos=0;

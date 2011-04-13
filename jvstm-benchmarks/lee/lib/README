@@ -1,1 +1,4 @@
-jvstm.jar goes here
+The jvstm.jar goes here.  When running the benchmarks script top-level script
+the JVSTM to test will automatically be copied to this directory with the name
+'jvstm.jar'.
+

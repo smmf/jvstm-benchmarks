@@ -57,7 +57,7 @@ import javax.xml.transform.stream.StreamResult;
 import jvstm.CommitException;
 import jvstm.Transaction;
 import jvstm.util.Cons;
-import jvstm.CommitStats;
+// import jvstm.CommitStats;
 
 public class LeeRouter {
     final static int cyan = 0x00FFFF;
@@ -805,7 +805,7 @@ public class LeeRouter {
         //System.out.println("Numthreads: " + numThreads);
         //System.out.println("Throughput:  " + throughput);
         //System.out.println("ElapsedTime: " + elapsedTime);
-	CommitStats.printAllStats();
+	// CommitStats.printAllStats();
         lr.report(numThreads,startTime,exitByTimeout,XML_REPORT, thread);
  	lr.sanityCheck();
         if(VIEW) {
