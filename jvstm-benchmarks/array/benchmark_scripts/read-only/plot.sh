@@ -43,6 +43,7 @@ set datafile separator \",\"
 set title \"Array: $BENCH_NAME\"
 set xlabel \"# threads\"
 set ylabel \"Time to complete (milliseconds)\"
+set yrange [0:]
 set key right top
 set boxwidth 0.7
 set size 0.6,0.6
