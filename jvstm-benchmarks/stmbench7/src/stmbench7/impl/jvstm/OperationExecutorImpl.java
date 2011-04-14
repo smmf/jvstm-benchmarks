@@ -3,6 +3,7 @@ package stmbench7.impl.jvstm;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import jvstm.Transaction;
+import stmbench7.BenchThread;
 import stmbench7.OperationExecutor;
 import stmbench7.Parameters;
 import stmbench7.core.Operation;
@@ -28,7 +29,7 @@ public class OperationExecutorImpl implements OperationExecutor {
 		switch(op.getOperationId().getType()) {
 			case OPERATION_RO:
 			case SHORT_TRAVERSAL_RO:
-			case TRAVERSAL_RO: 
+			case TRAVERSAL_RO:
 				readOnly = true;
 				break;
 			case OPERATION:
@@ -51,17 +52,12 @@ public class OperationExecutorImpl implements OperationExecutor {
 			boolean finished = false;
 			try{
 				if(readOnly) {
-					JVSTMStats.noteReadOnlyTransaction();
-					Transaction.begin(true);
+					JVSTMStats.noteReadOnlyTransaction(BenchThread.ID.get());
 				} else {
-					JVSTMStats.noteReadWriteTransaction();
-					//if (conflictNoted) {
-					//	Transaction.beginInevitable();
-					//} else {
-						Transaction.begin();
-					//}
+					JVSTMStats.noteReadWriteTransaction(BenchThread.ID.get());
 				}
 
+				beginTx(readOnly);
 				int result = op.performOperation();
 				Transaction.commit();
 				finished = true;
@@ -72,15 +68,15 @@ public class OperationExecutorImpl implements OperationExecutor {
 					throw new Error("Read-Only Transactions should never fail!");
 				}
 				if (!conflictNoted) {
-					JVSTMStats.noteConflict();
+					JVSTMStats.noteConflict(BenchThread.ID.get());
 					conflictNoted = true;
 				}
 				jvstm.Transaction.abort();
 				finished = true;
-				JVSTMStats.noteRestart();
+				JVSTMStats.noteRestart(BenchThread.ID.get());
 			} finally {
 				if (!finished) {
-					JVSTMStats.noteAbort();
+					JVSTMStats.noteAbort(BenchThread.ID.get());
 					jvstm.Transaction.abort();
 				}
 				// FIXME: ???
@@ -97,6 +93,10 @@ public class OperationExecutorImpl implements OperationExecutor {
 	public Operation getOp() {
 		// TODO Auto-generated method stub
 		return op;
-	}	
+	}
+
+	public void beginTx(boolean readOnly) {
+		Transaction.begin(readOnly);
+	}
 
 }

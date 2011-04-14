@@ -1,40 +1,92 @@
 package stmbench7.impl.jvstm;
 
+import stmbench7.Parameters;
+
 public class JVSTMStats {
-	private static int rwTransactions = 0;
-	private static int roTransactions = 0;
-	private static int conflicts = 0;
-	private static int restarts = 0;
-	private static int aborts = 0;
+	private static int[] rwTransactions 	= new int[Parameters.numThreads];
+	private static int[] roTransactions 	= new int[Parameters.numThreads];
+	private static int[] conflicts 	= new int[Parameters.numThreads];
+	private static int[] restarts 	= new int[Parameters.numThreads];
+	private static int[] aborts 		= new int[Parameters.numThreads];
 
-	public synchronized static void noteReadWriteTransaction() {
-		++rwTransactions;
+	public static void noteReadWriteTransaction(int id) {
+		rwTransactions[id] = rwTransactions[id] + 1;
 	}
 
-	public synchronized static void noteReadOnlyTransaction() {
-		++roTransactions;
+	public static void noteReadOnlyTransaction(int id) {
+		roTransactions[id] = roTransactions[id] + 1;
 	}
 
-	public synchronized static void noteConflict() {
-		++conflicts;
+	public static void noteConflict(int id) {
+		conflicts[id] = conflicts[id] + 1;
 	}
 
-	public synchronized static void noteRestart() {
-		++restarts;
+	public static void noteRestart(int id) {
+		restarts[id] = restarts[id] + 1;
 	}
 
-	public synchronized static void noteAbort() {
-		++aborts;
+	public static void noteAbort(int id) {
+		aborts[id] = aborts[id] + 1;
+	}
+
+	private static int getRwTransactions() {
+		int res = 0;
+
+		for (int i = 0; i < rwTransactions.length; ++i) {
+			res += rwTransactions[i];
+		}
+
+		return res;
+	}
+
+	private static int getRoTransactions() {
+		int res = 0;
+
+		for (int i = 0; i < roTransactions.length; ++i) {
+			res += roTransactions[i];
+		}
+
+		return res;
+	}
+
+	private static int getConflicts() {
+		int res = 0;
+
+		for (int i = 0; i < conflicts.length; ++i) {
+			res += conflicts[i];
+		}
+
+		return res;
+	}
+
+	private static int getRestarts() {
+		int res = 0;
+
+		for (int i = 0; i < restarts.length; ++i) {
+			res += restarts[i];
+		}
+
+		return res;
+	}
+
+	private static int getAborts() {
+		int res = 0;
+
+		for (int i = 0; i < aborts.length; ++i) {
+			res += aborts[i];
+		}
+
+		return res;
 	}
 
 	public static void printStats() {
-		System.out.printf("RW = %d, RO = %d, Conflicts = %d (%f%%), Restarts = %d (%f%%), Aborts = %d\n", 
-				rwTransactions, 
-				roTransactions, 
-				conflicts, 
-				((conflicts * 100.0) / rwTransactions),
-				restarts,
-				((restarts * 100.0) / rwTransactions),
-				aborts);
+		System.out.printf("RW = %d, RO = %d, Conflicts = %d (%f%%), Restarts = %d (%f%%), Aborts = %d\n",
+				getRwTransactions(),
+				getRoTransactions(),
+				getConflicts(),
+				((getConflicts() * 100.0) / getRwTransactions()),
+				getRestarts(),
+				((getRestarts() * 100.0) / getRwTransactions()),
+				getAborts());
 	}
 }
