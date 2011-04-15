@@ -2,8 +2,6 @@
 
 . ./benchmark_scripts.conf
 
-\rm -rf $RESULTS
-mkdir $RESULTS
 
 array_size=${#JVSTMS[@]}
 let pos=0

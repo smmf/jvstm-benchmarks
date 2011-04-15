@@ -1,32 +1,46 @@
 #!/bin/bash
 
-BENCH=stmbench7
-CLASSPATH="classes"
-JVSTMS="plain tamtp6b"
+. ./benchmark_scripts.conf
 
 \rm -rf $RESULTS
-ant clean-all compile
+mkdir $RESULTS
 
-for method in stm; do
-    for jvstm in $JVSTMS; do
-	OUTDIR=$RESULTS/$BENCH/$method/$jvstm
-	mkdir -p $OUTDIR
-	for i in $THREADS; do
-            for load in w; do
-		echo $jvstm: -w $load -t $i --no-traversals --no-sms
-		${JAVA} ${JAVA_OPTS} -cp ${CLASSPATH}:lib/jvstm.jar.${jvstm}.commitStats stmbench7.Benchmark -g $method -s stmbench7.impl.jvstm.SynchMethodInitializerJVSTM -w $load -l 120 -t $i --no-traversals --no-sms > $OUTDIR/notrav-${load}-nosms-${jvstm}-${i}.txt 2>&1
-	    done
+array_size=${#JVSTMS[@]}
+let pos=0
+while [ $pos -lt $array_size ]; do
+    jvstm=${JVSTMS[pos]}
+    jvstm_basename=`basename ${JVSTMS_BASENAMES[pos]} .jar`
+
+    cp -f "$jvstm" lib/jvstm.jar
+    echo "----------------------------"
+    echo "JVSTM="$jvstm_basename
+    echo "----------------------------"
+    ant clean-all compile
+
+    CLASSPATH="classes:lib/jvstm.jar"
+
+    for bench in $BENCHMARKS_TO_RUN; do
+        BENCH_NAME=`basename $bench`
+        OUTDIR="$RESULTS/$BENCH_NAME/$jvstm_basename"
+        mkdir -p "$OUTDIR"
+
+        # run the bench.sh
+        for nthreads in $THREADS; do
+            . ./$bench/bench.sh
         done
+
+        # run the process_results.sh
+        . ./$bench/process_results.sh
     done
+
+    let pos++
 done
 
-for method in coarse medium; do
-    OUTDIR=$RESULTS/$BENCH/$method
-    mkdir -p $OUTDIR
-    for i in $THREADS; do
-        for load in w; do
-            echo $method: -w $load -t $i --no-traversals --no-sms
-            ${JAVA} ${JAVA_OPTS} -cp ${CLASSPATH} stmbench7.Benchmark -g $method -w $load -l 120 -t $i --no-traversals --no-sms > $OUTDIR/notrav-${load}-nosms-${method}-${i}.txt 2>&1
-        done
-    done
+# plot the results per benchmark
+for bench in $BENCHMARKS_TO_RUN; do
+    BENCH_NAME=`basename $bench`
+
+    . ./$bench/plot.sh
 done
+
+

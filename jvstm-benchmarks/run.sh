@@ -50,6 +50,7 @@ for benchmark in $BENCHMARKS; do
     JAVA_OPTS="$DEFAULT_JAVA_OPTS"
 
     \rm -rf "$benchmark/$RESULTS"
+    mkdir "$benchmark/$RESULTS"
     if [ ! -d "$benchmark" ]; then
         echo "NOT A VALID BENCHMARK DIRECTORY: '$benchmark'. I skipped it." 
         continue;
