@@ -9,7 +9,7 @@
 #
 # It is expected that this script will write its output inside OUTDIR (a PDF file with some plot)
 
-BOARD="src/sparselong.txt"
+BOARDS="src/sparselong.txt"
 
 for board_path in $BOARDS; do
     board=`basename $board_path .txt`

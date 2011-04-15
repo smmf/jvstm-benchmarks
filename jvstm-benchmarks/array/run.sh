@@ -2,7 +2,6 @@
 
 . ./benchmark_scripts.conf
 
-
 array_size=${#JVSTMS[@]}
 let pos=0
 while [ $pos -lt $array_size ]; do

@@ -18,7 +18,7 @@ method="stm"
 load="r"
 duration="30"
 
-echo $jvstm: -w $load -t $i --no-traversals --no-sms
+echo $jvstm_basename: -l ${duration} -t ${nthreads} -w $load --no-traversals --no-sms
 
 ${JAVA} ${JAVA_OPTS} -cp ${CLASSPATH} stmbench7.Benchmark -g $method -s stmbench7.impl.jvstm.SynchMethodInitializerJVSTM -w $load -l $duration -t ${nthreads} --no-traversals --no-sms > $OUTDIR/notrav-${load}-nosms-${nthreads}.txt 2>&1
 

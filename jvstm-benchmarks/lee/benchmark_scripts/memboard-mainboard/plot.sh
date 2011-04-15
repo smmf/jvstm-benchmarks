@@ -9,7 +9,7 @@
 #
 # It is expected that this script will write its output inside OUTDIR (a PDF file with some plot)
 
-BOARD="src/memboard.txt src/mainboard.txt"
+BOARDS="src/memboard.txt src/mainboard.txt"
 
 for board_path in $BOARDS; do
     board=`basename $board_path .txt`
