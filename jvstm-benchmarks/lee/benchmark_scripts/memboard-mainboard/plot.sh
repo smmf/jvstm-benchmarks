@@ -5,7 +5,7 @@
 # THREADS: the list of thread combinations used to test
 # JVSTMS: an array with the list of JVSMTS (full path)
 #
-# BENCH_NAME: the name given to this benchmark
+# SCRIPT_NAME: the name given to this benchmark script
 #
 # It is expected that this script will write its output inside OUTDIR (a PDF file with some plot)
 
@@ -14,7 +14,7 @@ BOARDS="src/memboard.txt src/mainboard.txt"
 for board_path in $BOARDS; do
     board=`basename $board_path .txt`
 
-    OUTDIR="$RESULTS/$BENCH_NAME"
+    OUTDIR="$RESULTS/$SCRIPT_NAME"
     GP_FILE="$OUTDIR/${board}.gp"
     EPS_FILE=${GP_FILE/%.gp/.eps}
 

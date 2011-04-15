@@ -5,12 +5,12 @@
 # THREADS: the list of thread combinations used to test
 # JVSTMS: an array with the list of JVSMTS (full path)
 #
-# BENCH_NAME: the name given to this benchmark
+# SCRIPT_NAME: the name given to this benchmark script
 #
 # It is expected that this script will write its output inside OUTDIR (a PDF file with some plot)
 
 
-OUTDIR="$RESULTS/$BENCH_NAME"
+OUTDIR="$RESULTS/$SCRIPT_NAME"
 GP_FILE="$OUTDIR/array.gp"
 EPS_FILE=${GP_FILE/%.gp/.eps}
 
@@ -40,7 +40,7 @@ echo \
 "
 unset mxtics
 set datafile separator \",\"
-set title \"Array: $BENCH_NAME\"
+set title \"Array: $SCRIPT_NAME\"
 set xlabel \"# threads\"
 set ylabel \"Time to complete (milliseconds)\"
 set yrange [0:]

@@ -16,28 +16,28 @@ while [ $pos -lt $array_size ]; do
 
     CLASSPATH="classes:lib/jvstm.jar"
 
-    for bench in $BENCHMARKS_TO_RUN; do
-        BENCH_NAME=`basename $bench`
-        OUTDIR="$RESULTS/$BENCH_NAME/$jvstm_basename"
+    for bench_script in $BENCH_SCRIPTS_TO_RUN; do
+        SCRIPT_NAME=`basename $bench_script`
+        OUTDIR="$RESULTS/$SCRIPT_NAME/$jvstm_basename"
         mkdir -p "$OUTDIR"
 
         # run the bench.sh
         for nthreads in $THREADS; do
-            . ./$bench/bench.sh
+            . ./$bench_script/bench.sh
         done
 
         # run the process_results.sh
-        . ./$bench/process_results.sh
+        . ./$bench_script/process_results.sh
     done
 
     let pos++
 done
 
-# plot the results per benchmark
-for bench in $BENCHMARKS_TO_RUN; do
-    BENCH_NAME=`basename $bench`
+# plot the results per benchmark script
+for bench_script in $BENCH_SCRIPTS_TO_RUN; do
+    SCRIPT_NAME=`basename $bench_script`
 
-    . ./$bench/plot.sh
+    . ./$bench_script/plot.sh
 done
 
 
