@@ -181,7 +181,9 @@ public class Benchmark {
 		}
 
 		if(workload != null) {
-			if(workload.equals("r")) 
+			if(workload.equals("ro"))
+				Parameters.workloadType = Parameters.WorkloadType.READ_ONLY;
+			else if(workload.equals("r")) 
 				Parameters.workloadType = Parameters.WorkloadType.READ_DOMINATED;
 			else if(workload.equals("rw")) 
 				Parameters.workloadType = Parameters.WorkloadType.READ_WRITE;
@@ -593,8 +595,8 @@ public class Benchmark {
 			"Options:\n" +
 			"\t-t numThreads -- set the number of threads (default: 1)\n" +
 			"\t-l length     -- set the length of the benchmark, in seconds (default: 10)\n" +
-			"\t-w r|rw|w     -- set the workload: r = read-dominated, w = write-dominated\n" +
-			"\t                                   rw = read-write (default: read-dominated)\n" +
+			"\t-w ro|r|rw|w  -- set the workload: ro = read-only, r = read-dominated (default)\n" +
+			"\t                                   rw = read-write, w = write-dominated\n" +
 			"\t-g coarse|medium|fine|none|stm -- set synchronization method (default: coarse)\n" +
 			"\t-s stmInitializerClass         -- set STM initializer class (default: none)\n" +
 			"\t--no-traversals  -- do not use long traversals\n" +

@@ -76,6 +76,7 @@ public class Parameters {
      */
     @Immutable
     public enum WorkloadType {
+    	READ_ONLY(100), 
     	READ_DOMINATED(90), 
     	READ_WRITE(60), 
     	WRITE_DOMINATED(10);
