@@ -37,4 +37,10 @@ public class ModuleImpl extends DesignObjImpl implements Module {
     public Manual getManual() {
     	return man;
     }
+    
+	@Override
+	public boolean equals(Object obj) {
+		if(! (obj instanceof Module)) return false;
+		return super.equals(obj);
+	}
 }

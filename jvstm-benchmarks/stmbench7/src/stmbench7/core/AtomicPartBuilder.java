@@ -19,11 +19,11 @@ public class AtomicPartBuilder extends DesignObjBuilder {
 
 	private final IdPool idPool;
 
-	private final Index<IntIndexKey,AtomicPart> partIdIndex;
-	private final Index<IntIndexKey,LargeSet<AtomicPart>> partBuildDateIndex;
+	private final Index<Integer,AtomicPart> partIdIndex;
+	private final Index<Integer,LargeSet<AtomicPart>> partBuildDateIndex;
 
-	public AtomicPartBuilder(Index<IntIndexKey,AtomicPart> partIdIndex,
-			Index<IntIndexKey,LargeSet<AtomicPart>> partBuildDateIndex) {
+	public AtomicPartBuilder(Index<Integer,AtomicPart> partIdIndex,
+			Index<Integer,LargeSet<AtomicPart>> partBuildDateIndex) {
 		
 		this.partIdIndex = partIdIndex;
 		this.partBuildDateIndex = partBuildDateIndex;
@@ -39,7 +39,7 @@ public class AtomicPartBuilder extends DesignObjBuilder {
 		
 		AtomicPart part = designObjFactory.createAtomicPart(id, type, buildDate, x, y);
 
-		partIdIndex.put(new IntIndexKey(id), part);
+		partIdIndex.put(id, part);
 		BaseOperation.addAtomicPartToBuildDateIndex(partBuildDateIndex, part);
 	
 		return part;
@@ -49,7 +49,7 @@ public class AtomicPartBuilder extends DesignObjBuilder {
 		int partId = part.getId();
 
 		BaseOperation.removeAtomicPartFromBuildDateIndex(partBuildDateIndex, part);
-		partIdIndex.remove(new IntIndexKey(partId));
+		partIdIndex.remove(partId);
 		part.clearPointers();
 		
 		idPool.putUnusedId(partId);

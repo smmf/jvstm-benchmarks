@@ -7,7 +7,6 @@ import stmbench7.backend.BackendFactory;
 import stmbench7.backend.Index;
 import stmbench7.backend.LargeSet;
 import stmbench7.core.AtomicPart;
-import stmbench7.core.IntIndexKey;
 import stmbench7.core.Operation;
 import stmbench7.core.OperationFailedException;
 
@@ -32,12 +31,12 @@ public abstract class BaseOperation implements Operation {
 	 * an Index and Set implementations.
 	 */
 	public static void addAtomicPartToBuildDateIndex(
-			Index<IntIndexKey,LargeSet<AtomicPart>> atomicPartBuildDateIndex,
+			Index<Integer,LargeSet<AtomicPart>> atomicPartBuildDateIndex,
 			AtomicPart atomicPart) {
 		LargeSet<AtomicPart> newSet = BackendFactory.instance.<AtomicPart>createLargeSet();
 		newSet.add(atomicPart);
 		LargeSet<AtomicPart> sameDateSet = 
-			atomicPartBuildDateIndex.putIfAbsent(new IntIndexKey(atomicPart.getBuildDate()), newSet);
+			atomicPartBuildDateIndex.putIfAbsent(atomicPart.getBuildDate(), newSet);
 		if(sameDateSet != null) sameDateSet.add(atomicPart);
 	}
 
@@ -47,9 +46,9 @@ public abstract class BaseOperation implements Operation {
 	 * later reuse.
 	 */
 	public static void removeAtomicPartFromBuildDateIndex(
-			Index<IntIndexKey,LargeSet<AtomicPart>> atomicPartBuildDateIndex,
+			Index<Integer,LargeSet<AtomicPart>> atomicPartBuildDateIndex,
 			AtomicPart atomicPart) {
-		LargeSet<AtomicPart> sameDateSet = atomicPartBuildDateIndex.get(new IntIndexKey(atomicPart.getBuildDate()));
+		LargeSet<AtomicPart> sameDateSet = atomicPartBuildDateIndex.get(atomicPart.getBuildDate());
 		sameDateSet.remove(atomicPart);
 	}
 }

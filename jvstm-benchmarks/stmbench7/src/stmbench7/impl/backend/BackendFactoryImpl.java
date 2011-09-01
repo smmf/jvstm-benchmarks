@@ -3,7 +3,6 @@ package stmbench7.impl.backend;
 import stmbench7.backend.BackendFactory;
 import stmbench7.backend.IdPool;
 import stmbench7.backend.Index;
-import stmbench7.backend.IndexKey;
 import stmbench7.backend.LargeSet;
 
 /**
@@ -15,12 +14,12 @@ import stmbench7.backend.LargeSet;
 public class BackendFactoryImpl extends BackendFactory {
 
 	@Override
-	public <E> LargeSet<E> createLargeSet() {
+	public <E extends Comparable<E>> LargeSet<E> createLargeSet() {
 		return new LargeSetImpl<E>();
 	}
 
 	@Override
-	public <K extends IndexKey, V> Index<K,V> createIndex() {
+	public <K extends Comparable<K>, V> Index<K,V> createIndex() {
 		return new TreeMapIndex<K,V>();
 	}
 

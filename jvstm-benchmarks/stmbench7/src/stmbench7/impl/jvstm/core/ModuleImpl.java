@@ -19,10 +19,7 @@ public class ModuleImpl extends DesignObjImpl implements Module {
 	}
 
 	public ModuleImpl(ModuleImpl source) {
-		//TODO: really needed???
 		super(source);
-//		this.man = source.man;
-//		this.designRoot = source.designRoot;
 		throw new Error("ModuletImpl(ModuleImpl source) not implemented");
 	}
 
@@ -36,5 +33,11 @@ public class ModuleImpl extends DesignObjImpl implements Module {
 
 	public Manual getManual() {
 		return man;
+	}
+
+	@Override
+	public boolean equals(Object obj) {
+		if(!(obj instanceof Module)) return false;
+		return super.equals(obj);
 	}
 }

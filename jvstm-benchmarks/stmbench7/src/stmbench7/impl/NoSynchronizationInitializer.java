@@ -2,6 +2,7 @@ package stmbench7.impl;
 
 import stmbench7.OperationExecutorFactory;
 import stmbench7.SynchMethodInitializer;
+import stmbench7.ThreadFactory;
 import stmbench7.annotations.Immutable;
 import stmbench7.backend.BackendFactory;
 import stmbench7.core.DesignObjFactory;
@@ -25,5 +26,9 @@ public class NoSynchronizationInitializer implements SynchMethodInitializer {
 
 	public OperationExecutorFactory createOperationExecutorFactory() {
 		return new DefaultOperationExecutorFactory();
+	}
+
+	public ThreadFactory createThreadFactory() {
+		return new DefaultThreadFactory();
 	}
 }

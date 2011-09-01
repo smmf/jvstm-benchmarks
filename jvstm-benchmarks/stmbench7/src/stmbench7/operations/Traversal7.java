@@ -2,8 +2,6 @@ package stmbench7.operations;
 
 import java.util.HashSet;
 
-
-
 import stmbench7.OperationId;
 import stmbench7.Parameters;
 import stmbench7.Setup;
@@ -15,7 +13,6 @@ import stmbench7.core.Assembly;
 import stmbench7.core.AtomicPart;
 import stmbench7.core.BaseAssembly;
 import stmbench7.core.CompositePart;
-import stmbench7.core.IntIndexKey;
 import stmbench7.core.OperationFailedException;
 
 /**
@@ -24,7 +21,7 @@ import stmbench7.core.OperationFailedException;
  */
 public class Traversal7 extends BaseOperation {
 
-    Index<IntIndexKey,AtomicPart> partIdIndex;
+    Index<Integer,AtomicPart> partIdIndex;
 
     public Traversal7(Setup oo7setup) {
     	this.partIdIndex = oo7setup.getAtomicPartIdIndex();
@@ -33,7 +30,7 @@ public class Traversal7 extends BaseOperation {
     @Override
     @Transactional @ReadOnly
     public int performOperation() throws OperationFailedException {
-    	IntIndexKey partId = new IntIndexKey(ThreadRandom.nextInt(Parameters.MaxAtomicParts) + 1);
+    	int partId = ThreadRandom.nextInt(Parameters.MaxAtomicParts) + 1;
     	AtomicPart part = partIdIndex.get(partId);
     	if(part == null) throw new OperationFailedException();
     	

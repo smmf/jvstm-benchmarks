@@ -38,4 +38,15 @@ public abstract class AssemblyImpl extends DesignObjImpl implements Assembly {
     	superAssembly = null;
     	module = null;
     }
+
+	@Override
+	public boolean equals(Object obj) {
+		if(! (obj instanceof Assembly)) return false;
+		return super.equals(obj);
+	}
+	
+	@Override
+	public String toString() {
+		return super.toString() + ", superAssembly=[" + superAssembly + "]";
+	}
 }

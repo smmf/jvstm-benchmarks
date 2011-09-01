@@ -9,7 +9,7 @@ import stmbench7.annotations.Update;
  * indexes used by many of the benchmark operations.
  */
 @Atomic
-public interface Index<K extends IndexKey,V> extends Iterable<V> {
+public interface Index<K extends Comparable<K>,V> extends Iterable<V> {
 
 	@ReadOnly
     V get(K key);
@@ -25,4 +25,7 @@ public interface Index<K extends IndexKey,V> extends Iterable<V> {
     
     @ReadOnly
     public Iterable<V> getRange(K minKey, K maxKey);
+    
+    @ReadOnly
+    public Iterable<K> getKeys();
 }

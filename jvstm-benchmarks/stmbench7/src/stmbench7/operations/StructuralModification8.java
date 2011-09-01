@@ -7,7 +7,6 @@ import stmbench7.ThreadRandom;
 import stmbench7.annotations.Transactional;
 import stmbench7.annotations.Update;
 import stmbench7.core.ComplexAssembly;
-import stmbench7.core.IntIndexKey;
 import stmbench7.core.OperationFailedException;
 
 /**
@@ -23,7 +22,7 @@ public class StructuralModification8 extends StructuralModification7 {
 	@Transactional @Update
 	public int performOperation() throws OperationFailedException {
 		int complexAssemblyId = ThreadRandom.nextInt(Parameters.MaxComplexAssemblies) + 1;
-		ComplexAssembly complexAssembly = complexAssemblyIdIndex.get(new IntIndexKey(complexAssemblyId));
+		ComplexAssembly complexAssembly = complexAssemblyIdIndex.get(complexAssemblyId);
 		if(complexAssembly == null) throw new OperationFailedException();
 
 		// We want the tree of BAs/CAs to keep its form 

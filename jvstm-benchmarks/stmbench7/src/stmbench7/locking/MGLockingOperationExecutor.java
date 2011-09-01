@@ -20,7 +20,7 @@ import stmbench7.core.RuntimeError;
  * except for some complex assembly locks that may be acquired
  * by some complex assembly methods (see the MGLockingComplexAssemblyImpl
  * class).
- * 
+ *
  * Locking order:
  * <ol>
  * <li> Global structure lock,
@@ -88,7 +88,7 @@ public class MGLockingOperationExecutor implements OperationExecutor {
 		}
 	}
 
-	private static final ThreadLocal<AssemblyLocksAcquired> assemblyLocksAcquired = 
+	private static final ThreadLocal<AssemblyLocksAcquired> assemblyLocksAcquired =
 		new ThreadLocal<AssemblyLocksAcquired>() {
 		@Override
 		protected AssemblyLocksAcquired initialValue() {
@@ -130,11 +130,11 @@ public class MGLockingOperationExecutor implements OperationExecutor {
 	}
 
 	/**
-	 * Called by a MGLockingComplexAssemblyImpl method to 
+	 * Called by a MGLockingComplexAssemblyImpl method to
 	 * read-lock a given complex assembly level.
 	 */
 	public static void readLockAssemblyLevel(int level) {
-		AssemblyLocksAcquired threadAssemblyLocksAcquired = 
+		AssemblyLocksAcquired threadAssemblyLocksAcquired =
 			assemblyLocksAcquired.get();
 		if (threadAssemblyLocksAcquired.isReadAcquired[level]
 				|| threadAssemblyLocksAcquired.isWriteAcquired[level])
@@ -145,11 +145,11 @@ public class MGLockingOperationExecutor implements OperationExecutor {
 	}
 
 	/**
-	 * Called by a MGLockingComplexAssemblyImpl method to 
+	 * Called by a MGLockingComplexAssemblyImpl method to
 	 * write-lock a given complex assembly level.
 	 */
 	public static void writeLockAssemblyLevel(int level) {
-		AssemblyLocksAcquired threadAssemblyLocksAcquired = 
+		AssemblyLocksAcquired threadAssemblyLocksAcquired =
 			assemblyLocksAcquired.get();
 		if (threadAssemblyLocksAcquired.isWriteAcquired[level])
 			return;
@@ -177,7 +177,7 @@ public class MGLockingOperationExecutor implements OperationExecutor {
 			locksToAcquire.add(globalStructureWriteLock);
 			return;
 		}
-		
+
 		// Other operations: assume the structure is not modified
 		locksToAcquire.add(globalStructureReadLock);
 
@@ -290,12 +290,12 @@ public class MGLockingOperationExecutor implements OperationExecutor {
 
 			for (Lock lock : locksToAcquire) lock.lock();
 			return op.performOperation();
-		} 
+		}
 		finally {
 			if (Parameters.sequentialReplayEnabled)
 				lastOperationTimestamp = globalCounter.getAndIncrement();
 
-			AssemblyLocksAcquired threadAssemblyLocksAcquired = 
+			AssemblyLocksAcquired threadAssemblyLocksAcquired =
 				assemblyLocksAcquired.get();
 
 			for (int level = 1; level <= Parameters.NumAssmLevels; level++) {
@@ -314,7 +314,15 @@ public class MGLockingOperationExecutor implements OperationExecutor {
 		return lastOperationTimestamp;
 	}
 
-	public Operation getOp() {
-		return op;
+	@Override
+	public boolean isOperationReadOnly() {
+		// TODO Auto-generated method stub
+		return false;
+	}
+
+	@Override
+	public int getLastLocalOperationTimestamp() {
+		// TODO Auto-generated method stub
+		return 0;
 	}
 }

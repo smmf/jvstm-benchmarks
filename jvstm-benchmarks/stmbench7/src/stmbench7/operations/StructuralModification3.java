@@ -9,7 +9,6 @@ import stmbench7.annotations.Update;
 import stmbench7.backend.Index;
 import stmbench7.core.BaseAssembly;
 import stmbench7.core.CompositePart;
-import stmbench7.core.IntIndexKey;
 import stmbench7.core.OperationFailedException;
 
 /**
@@ -17,8 +16,8 @@ import stmbench7.core.OperationFailedException;
  */
 public class StructuralModification3 extends BaseOperation {
 
-	protected Index<IntIndexKey,BaseAssembly> baseAssemblyIdIndex;
-	protected Index<IntIndexKey,CompositePart> compositePartIdIndex;
+	protected Index<Integer,BaseAssembly> baseAssemblyIdIndex;
+	protected Index<Integer,CompositePart> compositePartIdIndex;
 	
 	public StructuralModification3(Setup oo7setup) {
 	
@@ -31,8 +30,8 @@ public class StructuralModification3 extends BaseOperation {
 	public int performOperation() throws OperationFailedException {
 		int baseAssemblyId = ThreadRandom.nextInt(Parameters.MaxBaseAssemblies) + 1;
 		int componentId = ThreadRandom.nextInt(Parameters.MaxCompParts) + 1;
-		BaseAssembly baseAssembly = baseAssemblyIdIndex.get(new IntIndexKey(baseAssemblyId));
-		CompositePart component = compositePartIdIndex.get(new IntIndexKey(componentId));
+		BaseAssembly baseAssembly = baseAssemblyIdIndex.get(baseAssemblyId);
+		CompositePart component = compositePartIdIndex.get(componentId);
 		
 		if(baseAssembly == null || component == null) throw new OperationFailedException();
 		

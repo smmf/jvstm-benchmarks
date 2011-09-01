@@ -12,9 +12,7 @@ import stmbench7.core.BaseAssembly;
 import stmbench7.core.ComplexAssembly;
 import stmbench7.core.CompositePart;
 import stmbench7.core.Document;
-import stmbench7.core.IntIndexKey;
 import stmbench7.core.RuntimeError;
-import stmbench7.core.StringIndexKey;
 
 /**
  * Test of invariants of indexes, and their consistency
@@ -29,28 +27,30 @@ public class IndexTest extends InvariantTest {
 	public static void checkInvariants(Setup setup, boolean initial, TraversedObjects traversedObjects) {
 
 		// Complex assemblies
-		Index<IntIndexKey,ComplexAssembly> complexAssemblyIdIndex = setup.getComplexAssemblyIdIndex();
+		Index<Integer,ComplexAssembly> complexAssemblyIdIndex = setup.getComplexAssemblyIdIndex();
 		for(ComplexAssembly traversedAssembly : traversedObjects.complexAssemblies) {
 			int id = traversedAssembly.getId();
-			ComplexAssembly indexedAssembly = complexAssemblyIdIndex.get(new IntIndexKey(id));
+			ComplexAssembly indexedAssembly = complexAssemblyIdIndex.get(id);
 			checkIndexValue("ComplexAssembly.id", traversedAssembly, indexedAssembly, id);
-		}
+		}	
 		checkAllTraversed(complexAssemblyIdIndex, traversedObjects.complexAssemblies, "ComplexAssembly.id");
+		traversedObjects.complexAssemblies.clear();
 		
 		// Base assemblies
-		Index<IntIndexKey,BaseAssembly> baseAssemblyIdIndex = setup.getBaseAssemblyIdIndex();
+		Index<Integer,BaseAssembly> baseAssemblyIdIndex = setup.getBaseAssemblyIdIndex();
 		for(BaseAssembly traversedAssembly : traversedObjects.baseAssemblies) {
 			int id = traversedAssembly.getId();
-			BaseAssembly indexedAssembly = baseAssemblyIdIndex.get(new IntIndexKey(id));
+			BaseAssembly indexedAssembly = baseAssemblyIdIndex.get(id);
 			checkIndexValue("BaseAssembly.id", traversedAssembly, indexedAssembly, id);
 		}
 		checkAllTraversed(baseAssemblyIdIndex, traversedObjects.baseAssemblies, "BaseAssembly.id");	
+		traversedObjects.baseAssemblies.clear();
 		
 		// Composite parts
-		Index<IntIndexKey,CompositePart> compositePartIdIndex = setup.getCompositePartIdIndex();
+		Index<Integer,CompositePart> compositePartIdIndex = setup.getCompositePartIdIndex();
 		for(CompositePart traversedComponent : traversedObjects.components) {
 			int id = traversedComponent.getId();
-			CompositePart indexedComponent = compositePartIdIndex.get(new IntIndexKey(id));
+			CompositePart indexedComponent = compositePartIdIndex.get(id);
 			checkIndexValue("CompositePart.id", traversedComponent, indexedComponent, id);
 		}
 		
@@ -59,34 +59,36 @@ public class IndexTest extends InvariantTest {
 		for(CompositePart indexedComponent : compositePartIdIndex)
 			if(! traversedObjects.components.contains(indexedComponent))
 				CompositePartTest.checkInvariants(indexedComponent, initial, null, traversedObjects);
+		traversedObjects.components.clear();
 		
 		// Documents
-	    Index<StringIndexKey,Document> documentTitleIndex = setup.getDocumentTitleIndex();
+	    Index<String,Document> documentTitleIndex = setup.getDocumentTitleIndex();
 	    for(Document traversedDocument : traversedObjects.documents) {
 	    	String title = traversedDocument.getTitle();
 	    	int id = traversedDocument.getDocumentId();
 	    	
-	    	Document indexedDocument = documentTitleIndex.get(new StringIndexKey(title));
+	    	Document indexedDocument = documentTitleIndex.get(title);
 	    	checkIndexValue("Document.title", traversedDocument, indexedDocument, id);
 	    }
 	    checkAllTraversed(documentTitleIndex, traversedObjects.documents, "Document.title");
-
+	    traversedObjects.documents.clear();
+	    
 	    // Atomic parts (id index)
-		Index<IntIndexKey,AtomicPart> atomicPartIdIndex = setup.getAtomicPartIdIndex();
+		Index<Integer,AtomicPart> atomicPartIdIndex = setup.getAtomicPartIdIndex();
 	    for(AtomicPart traversedPart : traversedObjects.atomicParts) {
 	    	int id = traversedPart.getId();
 	    	
-	    	AtomicPart indexedPart = atomicPartIdIndex.get(new IntIndexKey(id));
+	    	AtomicPart indexedPart = atomicPartIdIndex.get(id);
 	    	checkIndexValue("AtomicPart.id", traversedPart, indexedPart, id);
 	    }
 	    checkAllTraversed(atomicPartIdIndex, traversedObjects.atomicParts, "AtomicPart.id");
 	    
 	    // Atomic parts (buildDate index)
-	    Index<IntIndexKey,LargeSet<AtomicPart>> atomicPartBuildDateIndex = setup.getAtomicPartBuildDateIndex();
+	    Index<Integer,LargeSet<AtomicPart>> atomicPartBuildDateIndex = setup.getAtomicPartBuildDateIndex();
 	    for(AtomicPart traversedPart : traversedObjects.atomicParts) {
 	    	int id = traversedPart.getId();
 	    	LargeSet<AtomicPart> sameBuildDateParts = 
-	    		atomicPartBuildDateIndex.get(new IntIndexKey(traversedPart.getBuildDate()));
+	    		atomicPartBuildDateIndex.get(traversedPart.getBuildDate());
 	    	if(sameBuildDateParts == null || !sameBuildDateParts.contains(traversedPart))
 	    		reportError("AtomicPart.buildDate", "element with id = " + id + " not in the index");
 	    }
@@ -95,6 +97,7 @@ public class IndexTest extends InvariantTest {
 	    	for(AtomicPart indexedPart : sameBuildDateParts)
 	    		if(! traversedObjects.atomicParts.contains(indexedPart))
 	    			reportError("AtomicPart.buildDate", "index contains too many elements");
+	    traversedObjects.atomicParts.clear();
 	}
 	
 	private static void reportError(String index, String message) {
@@ -113,6 +116,6 @@ public class IndexTest extends InvariantTest {
 	private static void checkAllTraversed(Index<?,?> index, HashSet<?> traversedSet, String indexName) {
 	    for(Object indexedObject : index)
 	    	if(! traversedSet.contains(indexedObject))
-	    		reportError(indexName, "index contains too many elements");
+	    		reportError(indexName, "index contains too many elements (element " + indexedObject.toString() + ")");
 	}
 }

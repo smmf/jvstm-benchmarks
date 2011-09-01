@@ -1,0 +1,85 @@
+//===----------------------------------------------------------------------===//
+//	               STMBench7 JVSTM synch implementation
+//===----------------------------------------------------------------------===//
+
+JVSTM implementation of thread synchronization for the STMBench7 benchmark.
+
+Each operation executes inside a JVSTM transaction. Read-only operations
+execute inside read-only transactions whereas read-write operations execute
+inside read-write transactions.
+
+Operations of the benchmark may throw OperationFailedException exceptions in
+which case the transaction tries to commits.
+
+If the commit of a transaction fails, the JVSTMOperationExecutor restores the
+state of thread's random number generator and reexecutes the operation in a newly
+constructed transaction.
+
+Additionally, the JVSTMOperationExecutor collects information regarding the number
+of read-only transaction, the number of read-write transaction, the number of
+transaction restarts, and the number of transactions that failed to commit at
+least once. This information is printed when the benchmark finishes. 
+
+Starting with version 1.2 of the benchmark, the compilation process needs a
+deuceAgent.jar in the lib folder (see the README file for more information).
+
+//===----------------------------------------------------------------------===//
+//                 		     CHANGELOG
+//===----------------------------------------------------------------------===//
+
+01.09.2011
+	* Updates the STMBench7 benchmark to version 1.2.
+	* Corrects several bugs in the execution of operations with the JVSTM.
+	* Implements the 'sequential replay' option (see IMPORTANT NOTE).
+	* Fixes the JVSTM implementation of the benchmark to pass the structural
+	invariants check.
+
+27.06.2011
+	* New read-only workload (option -w ro) with 100% reads.
+
+14.05.2011
+	* Wait-free JVSTMStats implementation.
+
+30.03.2011
+	* Initial commit of the STMBench7 benchmark (07.03.2008-beta).
+
+
+//===----------------------------------------------------------------------===//
+//                                IMPORTANT NOTE
+//===----------------------------------------------------------------------===//
+
+With the version 1.2 of the benchmark, the JVSTM implementation not only
+respects the structural invariants of the benchmark data structure but also
+implements the 'seq-replay' option of the benchmark.
+
+With 'seq-replay', and before printing the results, the benchmark runtime
+replays the execution of the benchmark in a single thread and checks for opacity
+violations.
+
+The JVSTM implementation of this feature of the benchmark does not entail
+synchronization between concurrent threads but introduces a small performance
+penalty.
+
+Additionally, to pass the sequential replay test your have to make sure that
+the JVSTM you are testing fixes an off-by-one bug in the jvstm.util.RedBlackTree
+implementation of the bounded iterator (inner static class BoundedRBTIterator).
+
+If not, replace:
+        public T next() {
+            RedBlackTree<T> current = next;
+            T result = super.next();
+            if (current == last) {
+                next = null;
+            }
+            return result;
+        }
+
+
+With:
+        public T next() {
+           T result = super.next();
+           if (next == last || next.elem.compareTo(last.elem) == 0) {
+               next = null;
+           }
+           return result;
+        }

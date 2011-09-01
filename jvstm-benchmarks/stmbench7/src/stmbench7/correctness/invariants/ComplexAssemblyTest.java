@@ -17,7 +17,7 @@ public class ComplexAssemblyTest extends InvariantTest {
 
 	public static void checkInvariants(ComplexAssembly assembly, boolean initial, ComplexAssembly parentAssembly,
 			Module module, TraversedObjects traversedObjects) {
-		
+
 		traversedObjects.complexAssemblies.add(assembly);
 		
 		AssemblyTest.checkInvariants(assembly, initial, Parameters.MaxComplexAssemblies, parentAssembly, module);

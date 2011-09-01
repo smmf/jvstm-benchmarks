@@ -26,14 +26,13 @@ public class CompositePartImpl extends DesignObjImpl implements CompositePart {
 
 		this.documentation = new VBox<Document>(documentation);
 		documentation.setPart(this);
-		usedIn =new VBox<BagImpl<BaseAssembly>>(new BagImpl<BaseAssembly>());
+		usedIn = new VBox<BagImpl<BaseAssembly>>(new BagImpl<BaseAssembly>());
 		LargeSet<AtomicPart> set = BackendFactory.instance.createLargeSet();
 		parts = new VBox<LargeSet<AtomicPart>>(set);
 		rootPart = new VBox<AtomicPart>();
 	}
 
 	public CompositePartImpl(CompositePartImpl source) {
-		//TODO: really needed???
 		super(source);
 		throw new Error("CompositePartImpl(CompositePartImpl source) not implemented");
 	}
@@ -44,12 +43,10 @@ public class CompositePartImpl extends DesignObjImpl implements CompositePart {
 
 	public boolean addPart(AtomicPart part) {
 		boolean notAddedBefore = parts.get().add(part);
-		if(! notAddedBefore)
-			return false;
+		if(!notAddedBefore) return false;
 
 		part.setCompositePart(this);
-		if(rootPart.get() == null)
-			rootPart.put(part);
+		if(rootPart.get() == null) rootPart.put(part);
 
 		return true;
 	}
@@ -85,6 +82,14 @@ public class CompositePartImpl extends DesignObjImpl implements CompositePart {
 		rootPart.put(null);
 	}
 
+	@Override
+	public boolean equals(Object obj) {
+		if(!(obj instanceof CompositePart)) return false;
+		return super.equals(obj);
+	}
 
-
+	@Override
+	public Object clone() {
+		throw new Error(this.getClass().getCanonicalName() + ".clone() not implemented");
+	}
 }

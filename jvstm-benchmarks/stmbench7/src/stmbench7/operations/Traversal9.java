@@ -1,10 +1,7 @@
 package stmbench7.operations;
 
-
 import stmbench7.OperationId;
 import stmbench7.Setup;
-import stmbench7.annotations.ReadOnly;
-import stmbench7.annotations.Transactional;
 import stmbench7.core.Manual;
 
 /**
@@ -17,13 +14,6 @@ public class Traversal9 extends Traversal8 {
     	super(oo7setup);
     }
 
-	@Override
-	@Transactional @ReadOnly
-	public int performOperation() {
-		Manual manual = module.getManual();
-		return traverse(manual);
-	}
-    
     @Override
     protected int traverse(Manual manual) {
     	return manual.checkFirstLastCharTheSame();

@@ -18,8 +18,8 @@ public class ModuleBuilder extends DesignObjBuilder {
 	private final ManualBuilder manualFactory;
 	private final AssemblyBuilder assemblyBuilder;
 	
-	public ModuleBuilder(Index<IntIndexKey,BaseAssembly> baseAssemblyIdIndex,
-			Index<IntIndexKey,ComplexAssembly> complexAssemblyIdIndex) {
+	public ModuleBuilder(Index<Integer,BaseAssembly> baseAssemblyIdIndex,
+			Index<Integer,ComplexAssembly> complexAssemblyIdIndex) {
 		manualFactory = new ManualBuilder();
 		assemblyBuilder = new AssemblyBuilder(baseAssemblyIdIndex,
 				complexAssemblyIdIndex);

@@ -6,15 +6,15 @@ import java.util.NoSuchElementException;
 import jvstm.VBox;
 import jvstm.util.RedBlackTree;
 import stmbench7.backend.Index;
-import stmbench7.backend.IndexKey;
 import stmbench7.core.RuntimeError;
 
-public class VIndex<K extends IndexKey,V> implements Index<K,V> {
+public class VIndex<K extends Comparable<K>,V> implements Index<K,V> {
+
+	protected final VBox<RedBlackTree<Entry<K,V>>> index;
 
 	@SuppressWarnings("unchecked")
-	protected final VBox<RedBlackTree<Entry<K,V>>> index = new VBox<RedBlackTree<Entry<K,V>>>(RedBlackTree.EMPTY);
-
 	public VIndex() {
+		index = new VBox<RedBlackTree<Entry<K,V>>>(RedBlackTree.EMPTY);
 	}
 
 	public void put(K key, V value) {
@@ -71,9 +71,55 @@ public class VIndex<K extends IndexKey,V> implements Index<K,V> {
 		return new IndexIterator(index.get().iterator());
 	}
 
+	public Iterable<K> getKeys() {
+		return new Iterable<K>() {
+			public Iterator<K> iterator() {
+				return new KeyIterator(index.get().iterator());
+			}
+		};
+	}
+
+	class KeyIterator implements Iterator<K> {
+		private Iterator<Entry<K,V>> iter;
+		private Entry<K,V> next;
+
+		KeyIterator(Iterator<Entry<K,V>> iter) {
+			this.iter = iter;
+			updateNext();
+		}
+
+		private void updateNext() {
+			while (iter.hasNext()) {
+				Entry<K,V> nextEntry = iter.next();
+				if (nextEntry.value != null) {
+					next = nextEntry;
+					return;
+				}
+			}
+			next = null;
+		}
+
+		public boolean hasNext() {
+			return next != null;
+		}
+
+		public K next() {
+			if (next == null) {
+				throw new NoSuchElementException();
+			} else {
+				K key = next.key;
+				updateNext();
+				return key;
+			}
+		}
+
+		public void remove() {
+			throw new Error("Cannot remove keys");
+		}
+	}
+
 	class IndexIterator implements Iterator<V> {
 		private Iterator<Entry<K,V>> iter;
-		private Entry<K,V> lastReturned;
 		private Entry<K,V> next;
 
 		IndexIterator(Iterator<Entry<K,V>> iter) {
@@ -101,23 +147,17 @@ public class VIndex<K extends IndexKey,V> implements Index<K,V> {
 				throw new NoSuchElementException();
 			} else {
 				V result = next.value;
-				lastReturned = next;
 				updateNext();
 				return result;
 			}
 		}
 
 		public void remove() {
-			if (lastReturned == null) {
-				throw new IllegalStateException();
-			}
-
-			VIndex.this.remove(lastReturned.key);
-			lastReturned = null;
+			throw new Error("Cannot remove indexes");
 		}
 	}
 
-	static class Entry<K extends IndexKey,V> implements Comparable<Entry<K,V>> {
+	static class Entry<K extends Comparable<K>,V> implements Comparable<Entry<K,V>> {
 		private final K key;
 		private final V value;
 
@@ -130,4 +170,10 @@ public class VIndex<K extends IndexKey,V> implements Index<K,V> {
 			return this.key.compareTo(other.key);
 		}
 	}
+
+	@Override
+	public Object clone() {
+		throw new Error(this.getClass().getCanonicalName() + ".clone() not implemented");
+	}
+
 }

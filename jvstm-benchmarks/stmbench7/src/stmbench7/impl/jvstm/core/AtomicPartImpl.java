@@ -22,11 +22,9 @@ public class AtomicPartImpl extends DesignObjImpl implements AtomicPart {
 		to = new VBox<SmallSetImpl<Connection>>(new SmallSetImpl<Connection>());
 		from = new VBox<SmallSetImpl<Connection>>(new SmallSetImpl<Connection>());
 		partOf =  new VBox<CompositePart>();
-
 	}
 
 	public AtomicPartImpl(AtomicPartImpl source) {
-		//TODO: really needed???
 		super(source);
 		throw new Error("AtomicPartImpl(AtomicPartImpl<E> source) not implemented");
 	}
@@ -76,8 +74,8 @@ public class AtomicPartImpl extends DesignObjImpl implements AtomicPart {
 	}
 
 	public void clearPointers() {
-		x.put(new Integer(0));
-		y.put(new Integer(0));
+		x.put(0);
+		y.put(0);
 		to.put(null);
 		from.put(null);
 		partOf.put(null);
@@ -85,6 +83,23 @@ public class AtomicPartImpl extends DesignObjImpl implements AtomicPart {
 
 	public int compareTo(AtomicPart part) {
 		return id - part.getId();
+	}
+
+	@Override
+	public boolean equals(Object obj) {
+		if(!(obj instanceof AtomicPart)) return false;
+		return ((AtomicPart) obj).getId() == id;
+	}
+
+	@Override
+	public Object clone() {
+		throw new Error(this.getClass().getCanonicalName() + ".clone() not implemented");
+	}
+
+	@Override
+	public String toString() {
+		return super.toString() + ", x=" + x.get() + ", y=" + y.get() + ", partOf=[" + partOf.get() + "]" +
+			", to={ " + to.get().size() + " connections }, from={ " + from.get().size() + " connections }";
 	}
 
 }

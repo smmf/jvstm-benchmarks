@@ -60,9 +60,9 @@ LAST_POS=`expr $array_size - 1`
 while [ $pos -lt $array_size ]; do
     jvstm_basename=`basename ${JVSTMS_BASENAMES[pos]} .jar`
     if [ $pos -eq $LAST_POS ]; then
-        echo "\"$OUTDIR/$jvstm_basename-prog.dat\" using 3 title '$jvstm_basename'" >> $GP_FILE
+        echo "\"$OUTDIR/$jvstm_basename-prog.dat\" using 4 title '$jvstm_basename'" >> $GP_FILE
     else
-        echo "\"$OUTDIR/$jvstm_basename-prog.dat\" using 3 title '$jvstm_basename', \\" >> $GP_FILE
+        echo "\"$OUTDIR/$jvstm_basename-prog.dat\" using 4 title '$jvstm_basename', \\" >> $GP_FILE
     fi
     let pos++
 done

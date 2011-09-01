@@ -20,6 +20,4 @@ public interface Operation {
 	
 	@ReadOnly
 	public OperationId getOperationId();
-
-
 }

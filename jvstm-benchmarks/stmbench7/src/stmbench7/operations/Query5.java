@@ -7,7 +7,6 @@ import stmbench7.annotations.Transactional;
 import stmbench7.backend.Index;
 import stmbench7.core.BaseAssembly;
 import stmbench7.core.CompositePart;
-import stmbench7.core.IntIndexKey;
 
 /**
  * Query Q5 / Short traversal ST5 (see the specification).
@@ -15,7 +14,7 @@ import stmbench7.core.IntIndexKey;
  */
 public class Query5 extends BaseOperation {
 
-    protected Index<IntIndexKey,BaseAssembly> baseAssemblyIdIndex;
+    protected Index<Integer,BaseAssembly> baseAssemblyIdIndex;
 
     public Query5(Setup oo7setup) {
     	this.baseAssemblyIdIndex = oo7setup.getBaseAssemblyIdIndex();

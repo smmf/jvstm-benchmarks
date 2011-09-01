@@ -2,6 +2,7 @@ package stmbench7.impl.jvstm.core;
 
 import stmbench7.core.AtomicPart;
 import stmbench7.core.Connection;
+import stmbench7.core.RuntimeError;
 
 /**
  * STMBench7 benchmark Connection (see the specification).
@@ -38,5 +39,13 @@ public class ConnectionImpl implements Connection {
 
 	public String getType() {
 		return type;
+	}
+
+	public Object clone() {
+		try {
+			return super.clone();
+		} catch(CloneNotSupportedException e) {
+			throw new RuntimeError(e);
+		}
 	}
 }

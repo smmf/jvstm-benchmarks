@@ -25,7 +25,7 @@ public class IdPoolImpl implements IdPool {
 		return id;
 	}
 
-	@Update    
+	@Update
 	public void putUnusedId(int id) {
 		idPool.offer(id);
 	}
@@ -34,5 +34,10 @@ public class IdPoolImpl implements IdPool {
 		String txt = "IdPool:";
 		for(int id : idPool) txt += " " + id;
 		return txt;
+	}
+
+	@Override
+	public Object clone() {
+		throw new Error(this.getClass().getCanonicalName() + ".clone() not implemented");
 	}
 }

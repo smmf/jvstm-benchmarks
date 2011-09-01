@@ -1,6 +1,5 @@
 package stmbench7.operations;
 
-
 import stmbench7.OperationId;
 import stmbench7.Parameters;
 import stmbench7.Setup;
@@ -9,7 +8,6 @@ import stmbench7.annotations.Transactional;
 import stmbench7.backend.Index;
 import stmbench7.backend.LargeSet;
 import stmbench7.core.AtomicPart;
-import stmbench7.core.IntIndexKey;
 import stmbench7.core.OperationFailedException;
 
 /**
@@ -18,8 +16,8 @@ import stmbench7.core.OperationFailedException;
  */
 public class Query2 extends BaseOperation {
 
-    protected Index<IntIndexKey,LargeSet<AtomicPart>> partBuildDateIndex;
-    protected IntIndexKey minAtomicDate, maxAtomicDate;
+    protected Index<Integer,LargeSet<AtomicPart>> partBuildDateIndex;
+    protected Integer minAtomicDate, maxAtomicDate;
     
     public Query2(Setup oo7setup) {
     	this(oo7setup, 1);
@@ -27,15 +25,13 @@ public class Query2 extends BaseOperation {
 
     protected Query2(Setup oo7setup, int percent) {
     	this.partBuildDateIndex = oo7setup.getAtomicPartBuildDateIndex();
-    	this.maxAtomicDate = new IntIndexKey(Parameters.MaxAtomicDate);
-    	this.minAtomicDate = 
-    		new IntIndexKey(Parameters.MaxAtomicDate - 
-    				percent * (Parameters.MaxAtomicDate - Parameters.MinAtomicDate) / 100);
+    	this.maxAtomicDate = Parameters.MaxAtomicDate;
+    	this.minAtomicDate = Parameters.MaxAtomicDate - 
+    				percent * (Parameters.MaxAtomicDate - Parameters.MinAtomicDate) / 100;
     }
 
     @Override
 	@Transactional @ReadOnly
-	
     public int performOperation() throws OperationFailedException {
     	Iterable<LargeSet<AtomicPart>> partSets = partBuildDateIndex.getRange(minAtomicDate, maxAtomicDate);
     	int count = 0;

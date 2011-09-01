@@ -1,24 +1,29 @@
 package stmbench7.impl.jvstm;
 
-import java.util.concurrent.atomic.AtomicInteger;
-
 import jvstm.Transaction;
 import stmbench7.BenchThread;
 import stmbench7.OperationExecutor;
 import stmbench7.Parameters;
+import stmbench7.ThreadRandom;
 import stmbench7.core.Operation;
 import stmbench7.core.OperationFailedException;
 import stmbench7.core.RuntimeError;
 
-public class OperationExecutorImpl implements OperationExecutor {
+public class JVSTMOperationExecutor implements OperationExecutor {
+
+	private static final ThreadLocal<Integer> lastLocalOperationTimestamp = new ThreadLocal<Integer>() {
+		@Override
+		protected Integer initialValue() { return 0; }
+	};
 
 	private final Operation op;
+
 	private boolean readOnly;
 	private boolean idNull = false;
 	private int lastOperationTimestamp = 0;
-	private static final AtomicInteger globalCounter = new AtomicInteger();
+	private boolean wasReadOnly;
 
-	public OperationExecutorImpl(Operation op) {
+	public JVSTMOperationExecutor(Operation op) {
 		this.op = op;
 
 		if(op.getOperationId() == null){
@@ -44,44 +49,41 @@ public class OperationExecutorImpl implements OperationExecutor {
 	}
 
 	public int execute() throws OperationFailedException {
-		if(idNull == true)
-			return op.performOperation();
+		if(idNull == true) return op.performOperation();
+		else return txExecute();
+	}
 
+	private int txExecute() throws OperationFailedException {
 		boolean conflictNoted = false;
+		Transaction tx = null;
+
 		while (true) {
-			boolean finished = false;
+			JVSTMStats.noteTransaction(readOnly, BenchThread.ID.get());
+
 			try{
-				if(readOnly) {
-					JVSTMStats.noteReadOnlyTransaction(BenchThread.ID.get());
-				} else {
-					JVSTMStats.noteReadWriteTransaction(BenchThread.ID.get());
+				Transaction.begin(readOnly);
+				tx = Transaction.current();
+				try {
+					ThreadRandom.saveState();
+					return op.performOperation();
+				} finally {
+					wasReadOnly = !tx.isWriteTransaction();
+					Transaction.commit();
+					if (Parameters.sequentialReplayEnabled) {
+						lastLocalOperationTimestamp.set(lastLocalOperationTimestamp.get() + 1);
+						lastOperationTimestamp = tx.getNumber();
+					}
 				}
-
-				beginTx(readOnly);
-				int result = op.performOperation();
-				Transaction.commit();
-				finished = true;
-				return result;
-
 			}  catch (jvstm.CommitException ce) {
-				if (readOnly) {
-					throw new Error("Read-Only Transactions should never fail!");
-				}
+				ThreadRandom.restoreState();
+				if (readOnly) throw new Error("Read-Only Transactions should never fail!");
+
 				if (!conflictNoted) {
 					JVSTMStats.noteConflict(BenchThread.ID.get());
 					conflictNoted = true;
 				}
 				jvstm.Transaction.abort();
-				finished = true;
 				JVSTMStats.noteRestart(BenchThread.ID.get());
-			} finally {
-				if (!finished) {
-					JVSTMStats.noteAbort(BenchThread.ID.get());
-					jvstm.Transaction.abort();
-				}
-				// FIXME: ???
-				if (Parameters.sequentialReplayEnabled)
-					lastOperationTimestamp = globalCounter.getAndIncrement();
 			}
 		}
 	}
@@ -90,13 +92,13 @@ public class OperationExecutorImpl implements OperationExecutor {
 		return lastOperationTimestamp;
 	}
 
-	public Operation getOp() {
-		// TODO Auto-generated method stub
-		return op;
+	public int getLastLocalOperationTimestamp() {
+		return lastLocalOperationTimestamp.get();
 	}
 
-	public void beginTx(boolean readOnly) {
-		Transaction.begin(readOnly);
+	@Override
+	public boolean isOperationReadOnly() {
+		return wasReadOnly;
 	}
 
 }

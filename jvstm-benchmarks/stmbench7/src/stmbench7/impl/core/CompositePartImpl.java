@@ -8,7 +8,6 @@ import stmbench7.core.BaseAssembly;
 import stmbench7.core.CompositePart;
 import stmbench7.core.Document;
 import stmbench7.impl.backend.BagImpl;
-import stmbench7.impl.backend.ImmutableCollectionImpl;
 
 /**
  * STMBench7 benchmark Composite Part (see the specification).
@@ -71,7 +70,7 @@ public class CompositePartImpl extends DesignObjImpl implements CompositePart {
     }
 
     public ImmutableCollection<BaseAssembly> getUsedIn() {
-    	return new ImmutableCollectionImpl<BaseAssembly>(usedIn);
+    	return usedIn.immutableView();
     }
     
     public void clearPointers() {
@@ -79,5 +78,19 @@ public class CompositePartImpl extends DesignObjImpl implements CompositePart {
     	parts = null;
     	usedIn = null;
     	rootPart = null;
+    }
+    
+	@Override
+	public boolean equals(Object obj) {
+		if(! (obj instanceof CompositePart)) return false;
+		return super.equals(obj);
+	}
+
+    @SuppressWarnings("unchecked")
+	@Override
+	public Object clone() {
+		CompositePartImpl clone = (CompositePartImpl) super.clone();
+		clone.usedIn = (BagImpl<BaseAssembly>) usedIn.clone();
+		return clone;
     }
 }

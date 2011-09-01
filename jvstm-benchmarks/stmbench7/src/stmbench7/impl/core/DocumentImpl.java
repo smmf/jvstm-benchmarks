@@ -2,14 +2,15 @@ package stmbench7.impl.core;
 
 import stmbench7.core.CompositePart;
 import stmbench7.core.Document;
+import stmbench7.core.RuntimeError;
 
 
 /**
  * STMBench7 benchmark Document (see the specification).
  * Default implementation.
  */
-public class DocumentImpl implements Document {
-    
+public class DocumentImpl implements Document, Cloneable {
+
     private final int id;
     private String title;
     private String text;
@@ -27,7 +28,7 @@ public class DocumentImpl implements Document {
     	this.text = source.text;
     	this.part = source.part;
     }
-    
+
     public void setPart(CompositePart part) {
     	this.part = part;
     }
@@ -69,5 +70,26 @@ public class DocumentImpl implements Document {
 
 	public String getText() {
 		return text;
+	}
+
+	@Override
+	public boolean equals(Object obj) {
+		if(! (obj instanceof Document)) return false;
+		return ((Document) obj).getDocumentId() == id;
+	}
+
+	@Override
+	public int hashCode() {
+		return id;
+	}
+
+	@Override
+	public Object clone() {
+		try {
+			return super.clone();
+		}
+		catch(CloneNotSupportedException e) {
+			throw new RuntimeError(e);
+		}
 	}
 }

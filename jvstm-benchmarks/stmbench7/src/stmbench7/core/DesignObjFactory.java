@@ -16,8 +16,6 @@ public abstract class DesignObjFactory {
 	public static DesignObjFactory instance = null;
 	
 	public static void setInstance(DesignObjFactory newInstance) {
-		if(instance != null)
-			throw new RuntimeError("DesignObjFactory already instantiated");
 		instance = newInstance;
 	}
 	

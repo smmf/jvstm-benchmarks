@@ -10,22 +10,33 @@ import stmbench7.core.OperationFailedException;
  */
 public class DefaultOperationExecutor implements OperationExecutor {
 
+	private static int clock = 0;
+
 	private final Operation op;
 	private int lastTimestamp = 0;
-	
+
 	public DefaultOperationExecutor(Operation op) {
 		this.op = op;
 	}
-	
+
 	public int execute() throws OperationFailedException {
+		lastTimestamp = clock++;
 		return op.performOperation();
 	}
 
 	public int getLastOperationTimestamp() {
-		return lastTimestamp++;
+		return lastTimestamp;
 	}
 
-	public Operation getOp() {
-		return op;
-	}	
+	@Override
+	public boolean isOperationReadOnly() {
+		// TODO Auto-generated method stub
+		return false;
+	}
+
+	@Override
+	public int getLastLocalOperationTimestamp() {
+		// TODO Auto-generated method stub
+		return 0;
+	}
 }

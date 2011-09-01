@@ -2,8 +2,6 @@ package stmbench7.operations;
 
 import java.util.HashSet;
 
-
-
 import stmbench7.OperationId;
 import stmbench7.Setup;
 import stmbench7.annotations.ReadOnly;
@@ -30,7 +28,6 @@ public class Traversal1 extends BaseOperation {
 
 	@Override
 	@Transactional @ReadOnly
-	
 	public int performOperation() {
 		ComplexAssembly designRoot = module.getDesignRoot();
 		return traverse(designRoot);

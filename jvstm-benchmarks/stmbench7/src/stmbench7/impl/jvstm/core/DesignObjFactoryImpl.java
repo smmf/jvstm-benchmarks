@@ -12,8 +12,8 @@ import stmbench7.core.Module;
 
 /**
  * Implements methods that create objects implementing
- * interfaces defined in stmbench7.core. This default implementation 
- * constructs objects that are NOT thread-safe. 
+ * interfaces defined in stmbench7.core. This default implementation
+ * constructs objects that are NOT thread-safe.
  */
 public class DesignObjFactoryImpl extends DesignObjFactory {
 
@@ -29,19 +29,19 @@ public class DesignObjFactoryImpl extends DesignObjFactory {
 	}
 
 	@Override
-	public BaseAssembly createBaseAssembly(int id, String type, int buildDate, 
+	public BaseAssembly createBaseAssembly(int id, String type, int buildDate,
 			Module module, ComplexAssembly superAssembly) {
 		return new BaseAssemblyImpl(id, type, buildDate, module, superAssembly);
 	}
 
 	@Override
-	public ComplexAssembly createComplexAssembly(int id, String type, int buildDate, 
+	public ComplexAssembly createComplexAssembly(int id, String type, int buildDate,
 			Module module, ComplexAssembly superAssembly) {
 		return new ComplexAssemblyImpl(id, type, buildDate, module, superAssembly);
 	}
 
 	@Override
-	public CompositePart createCompositePart(int id, String type, int buildDate, 
+	public CompositePart createCompositePart(int id, String type, int buildDate,
 			Document documentation) {
 		return new CompositePartImpl(id, type, buildDate, documentation);
 	}

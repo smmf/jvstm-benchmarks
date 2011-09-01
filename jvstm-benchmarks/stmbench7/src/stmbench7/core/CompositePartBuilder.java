@@ -19,14 +19,14 @@ public class CompositePartBuilder extends DesignObjBuilder {
 
 	private final IdPool idPool; 
 	
-	private final Index<IntIndexKey,CompositePart> compositePartIdIndex;
+	private final Index<Integer,CompositePart> compositePartIdIndex;
 	private final DocumentBuilder documentBuilder;
 	private final AtomicPartBuilder atomicPartBuilder;
 	
-	public CompositePartBuilder(Index<IntIndexKey,CompositePart> compositePartIdIndex,
-			Index<StringIndexKey,Document> documentTitleIndex,
-			Index<IntIndexKey,AtomicPart> partIdIndex,
-			Index<IntIndexKey,LargeSet<AtomicPart>> partBuildDateIndex) {
+	public CompositePartBuilder(Index<Integer,CompositePart> compositePartIdIndex,
+			Index<String,Document> documentTitleIndex,
+			Index<Integer,AtomicPart> partIdIndex,
+			Index<Integer,LargeSet<AtomicPart>> partBuildDateIndex) {
 		
 		this.compositePartIdIndex = compositePartIdIndex;
 		documentBuilder = new DocumentBuilder(documentTitleIndex);
@@ -36,7 +36,7 @@ public class CompositePartBuilder extends DesignObjBuilder {
 	
 	/**
      * Creates a component (composite part) with the documentation and
-     * a graph of atomic parts and updates all the relevand indexes.
+     * a graph of atomic parts and updates all the relevant indexes.
      */
 	public CompositePart createAndRegisterCompositePart() throws OperationFailedException {
 		int id = idPool.getId();
@@ -48,29 +48,41 @@ public class CompositePartBuilder extends DesignObjBuilder {
 		else
 		    buildDate = createBuildDate(Parameters.MinOldCompDate, Parameters.MaxOldCompDate);
 
-		Document documentation = documentBuilder.createAndRegisterDocument(id);
-		CompositePart component = designObjFactory.createCompositePart(id, type, buildDate, documentation);
+		Document documentation = null;
+		AtomicPart parts[] = new AtomicPart[Parameters.NumAtomicPerComp];
 
-		AtomicPart parts[] = createAtomicParts();
-		createConnections(parts);
+		try {
+			documentation = documentBuilder.createAndRegisterDocument(id);
+			createAtomicParts(parts);
+		}
+		catch(OperationFailedException e) {
+			if(documentation != null) documentBuilder.unregisterAndRecycleDocument(documentation);
+			for(AtomicPart part : parts)
+				if(part != null) atomicPartBuilder.unregisterAndRecycleAtomicPart(part);
+			idPool.putUnusedId(id);
+			throw e;
+		}
 		
+		createConnections(parts);
+
+		CompositePart component = designObjFactory.createCompositePart(id, type, buildDate, documentation);
 	    for(AtomicPart part : parts) component.addPart(part);
 	    
-	    compositePartIdIndex.put(new IntIndexKey(id), component);
+	    compositePartIdIndex.put(id, component);
 
 	    return component;
 	}
 
 	public void unregisterAndRecycleCompositePart(CompositePart compositePart) {
 		int id = compositePart.getId();
-		compositePartIdIndex.remove(new IntIndexKey(id));
+		compositePartIdIndex.remove(id);
 		
 		documentBuilder.unregisterAndRecycleDocument(compositePart.getDocumentation());
 		
 		for(AtomicPart atomicPart : compositePart.getParts())
 			atomicPartBuilder.unregisterAndRecycleAtomicPart(atomicPart);
 		
-		ImmutableCollection<BaseAssembly> usedInList = compositePart.getUsedIn();
+		ImmutableCollection<BaseAssembly> usedInList = compositePart.getUsedIn().clone();
 		for(BaseAssembly ownerAssembly : usedInList) {
 			while(ownerAssembly.removeComponent(compositePart));
 		}
@@ -82,16 +94,12 @@ public class CompositePartBuilder extends DesignObjBuilder {
 	/**
 	 * Create all atomic parts of a given composite part.
 	 */ 
-	private AtomicPart[] createAtomicParts() throws OperationFailedException {
+	private void createAtomicParts(AtomicPart[] parts) throws OperationFailedException {
 		
-		AtomicPart parts[] = new AtomicPart[Parameters.NumAtomicPerComp];
-
 		for(int partNum = 0; partNum < Parameters.NumAtomicPerComp; partNum++) {
 		    AtomicPart part = atomicPartBuilder.createAndRegisterAtomicPart();
 		    parts[partNum] = part;
 		}
-		
-		return parts;
 	}
 	
 	/**

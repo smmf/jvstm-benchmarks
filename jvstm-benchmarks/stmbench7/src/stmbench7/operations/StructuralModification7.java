@@ -9,7 +9,6 @@ import stmbench7.annotations.Update;
 import stmbench7.backend.Index;
 import stmbench7.core.AssemblyBuilder;
 import stmbench7.core.ComplexAssembly;
-import stmbench7.core.IntIndexKey;
 import stmbench7.core.Module;
 import stmbench7.core.OperationFailedException;
 
@@ -19,7 +18,7 @@ import stmbench7.core.OperationFailedException;
 public class StructuralModification7 extends BaseOperation {
 
 	protected AssemblyBuilder assemblyBuilder;
-	protected Index<IntIndexKey,ComplexAssembly> complexAssemblyIdIndex;
+	protected Index<Integer,ComplexAssembly> complexAssemblyIdIndex;
 	protected Module module;
 	
 	public StructuralModification7(Setup oo7setup) {
@@ -32,7 +31,7 @@ public class StructuralModification7 extends BaseOperation {
 	@Transactional @Update
 	public int performOperation() throws OperationFailedException {
 		int superAssemblyId = ThreadRandom.nextInt(Parameters.MaxComplexAssemblies) + 1;
-		ComplexAssembly superAssembly = complexAssemblyIdIndex.get(new IntIndexKey(superAssemblyId));
+		ComplexAssembly superAssembly = complexAssemblyIdIndex.get(superAssemblyId);
 		if(superAssembly == null) throw new OperationFailedException();
 
 		assemblyBuilder.createAndRegisterAssembly(module, superAssembly);

@@ -8,7 +8,6 @@ import stmbench7.annotations.Transactional;
 import stmbench7.annotations.Update;
 import stmbench7.backend.Index;
 import stmbench7.core.BaseAssembly;
-import stmbench7.core.IntIndexKey;
 import stmbench7.core.OperationFailedException;
 
 /**
@@ -16,7 +15,7 @@ import stmbench7.core.OperationFailedException;
  */
 public class StructuralModification6 extends StructuralModification5 {
 
-	protected Index<IntIndexKey, BaseAssembly> baseAssemblyIdIndex;
+	protected Index<Integer, BaseAssembly> baseAssemblyIdIndex;
 	
 	public StructuralModification6(Setup oo7setup) {
 		super(oo7setup);
@@ -27,7 +26,7 @@ public class StructuralModification6 extends StructuralModification5 {
 	@Transactional @Update
 	public int performOperation() throws OperationFailedException {
 		int baseAssemblyToRemoveId = ThreadRandom.nextInt(Parameters.MaxBaseAssemblies) + 1;
-		BaseAssembly baseAssemblyToRemove = baseAssemblyIdIndex.get(new IntIndexKey(baseAssemblyToRemoveId));
+		BaseAssembly baseAssemblyToRemove = baseAssemblyIdIndex.get(baseAssemblyToRemoveId);
 		if(baseAssemblyToRemove == null) throw new OperationFailedException();
 		
 		// We want the tree of BAs/CAs to keep its form 

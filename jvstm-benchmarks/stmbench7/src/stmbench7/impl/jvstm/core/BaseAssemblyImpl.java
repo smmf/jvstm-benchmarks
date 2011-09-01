@@ -20,11 +20,9 @@ public class BaseAssemblyImpl extends AssemblyImpl implements BaseAssembly {
 	public BaseAssemblyImpl(int id, String type, int buildDate, Module module, ComplexAssembly superAssembly) {
 		super(id, type, buildDate, module, superAssembly);
 		components = new VBox<BagImpl<CompositePart>>(new BagImpl<CompositePart>());
-
 	}
 
 	public BaseAssemblyImpl(BaseAssemblyImpl source) {
-		//TODO: really needed???
 		super(source);
 		throw new Error("BaseAssemblyImpl(BaseAssemblyImpl<E> source) not implemented");
 	}
@@ -36,8 +34,7 @@ public class BaseAssemblyImpl extends AssemblyImpl implements BaseAssembly {
 
 	public boolean removeComponent(CompositePart component) {
 		boolean componentExists = components.get().remove(component);
-		if(! componentExists)
-			return false;
+		if(!componentExists) return false;
 
 		component.removeAssembly(this);
 		return true;
@@ -53,5 +50,22 @@ public class BaseAssemblyImpl extends AssemblyImpl implements BaseAssembly {
 		components.put(null);
 	}
 
+	@Override
+	public boolean equals(Object obj) {
+		if(!(obj instanceof BaseAssembly)) return false;
+		return super.equals(obj);
+	}
 
+	@Override
+	public Object clone() {
+		throw new Error(this.getClass().getCanonicalName() + ".clone() not implemented");
+	}
+
+	@Override
+	public String toString() {
+		String componentIds = "{ ";
+		for(CompositePart component : components.get()) componentIds += component.getId() + " ";
+		componentIds += "}";
+		return super.toString() + ", components=" + componentIds;
+	}
 }

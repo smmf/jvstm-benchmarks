@@ -4,7 +4,6 @@ import stmbench7.backend.ImmutableCollection;
 import stmbench7.core.AtomicPart;
 import stmbench7.core.CompositePart;
 import stmbench7.core.Connection;
-import stmbench7.impl.backend.ImmutableCollectionImpl;
 import stmbench7.impl.backend.SmallSetImpl;
 
 /**
@@ -14,7 +13,7 @@ import stmbench7.impl.backend.SmallSetImpl;
 public class AtomicPartImpl extends DesignObjImpl implements AtomicPart {
 
     private int x, y;
-    private SmallSetImpl<Connection> to, from;
+    protected SmallSetImpl<Connection> to, from;
     private CompositePart partOf;
 
     public AtomicPartImpl(int id, String type, int buildDate, int x, int y) {
@@ -53,11 +52,11 @@ public class AtomicPartImpl extends DesignObjImpl implements AtomicPart {
     }
 
     public ImmutableCollection<Connection> getToConnections() {
-    	return new ImmutableCollectionImpl<Connection>(to);
+    	return to.immutableView();
     }
 
     public ImmutableCollection<Connection> getFromConnections() {
-    	return new ImmutableCollectionImpl<Connection>(from);
+    	return from.immutableView();
     }
     
     public CompositePart getPartOf() {
@@ -87,5 +86,26 @@ public class AtomicPartImpl extends DesignObjImpl implements AtomicPart {
 
 	public int compareTo(AtomicPart part) {
 		return id - part.getId();
+	}
+	
+	@Override
+	public boolean equals(Object obj) {
+		if(! (obj instanceof AtomicPart)) return false;
+		return super.equals(obj);
+	}
+
+	@SuppressWarnings("unchecked")
+	@Override
+	public AtomicPartImpl clone() {
+		AtomicPartImpl clone = (AtomicPartImpl) super.clone();
+		clone.from = (SmallSetImpl<Connection>) from.clone();
+		clone.to = (SmallSetImpl<Connection>) to.clone();
+		return clone;
+	}
+	
+	@Override
+	public String toString() {
+		return super.toString() + ", x=" + x + ", y=" + y + ", partOf=[" + partOf + "]" +
+			", to={ " + to.size() + " connections }, from={ " + from.size() + " connections }"; 
 	}
 }

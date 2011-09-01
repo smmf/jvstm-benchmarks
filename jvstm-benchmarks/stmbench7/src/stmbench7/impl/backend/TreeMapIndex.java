@@ -4,16 +4,15 @@ import java.util.Iterator;
 import java.util.TreeMap;
 
 import stmbench7.backend.Index;
-import stmbench7.backend.IndexKey;
 import stmbench7.core.RuntimeError;
 
 /**
  * A simple implementation of an index
  * (NOT thread-safe).
  */
-public class TreeMapIndex<K extends IndexKey,V> implements Index<K,V> {
+public class TreeMapIndex<K extends Comparable<K>,V> implements Index<K,V>, Cloneable {
 
-	protected TreeMap<K,V> index;
+	private final TreeMap<K,V> index;
 	
 	public TreeMapIndex() {
 		index = new TreeMap<K,V>();
@@ -49,5 +48,19 @@ public class TreeMapIndex<K extends IndexKey,V> implements Index<K,V> {
 
 	public Iterator<V> iterator() {
 		return index.values().iterator();
+	}
+	
+	public Iterable<K> getKeys() {
+		return index.keySet();
+	}
+	
+	private TreeMapIndex(TreeMap<K,V> index) {
+		this.index = index;
+	}
+	
+	@SuppressWarnings("unchecked")
+	@Override
+	public Object clone() {
+		return new TreeMapIndex((TreeMap<K,V>) index.clone()); 
 	}
 }

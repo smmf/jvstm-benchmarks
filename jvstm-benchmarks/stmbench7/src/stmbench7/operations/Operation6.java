@@ -1,6 +1,5 @@
 package stmbench7.operations;
 
-
 import stmbench7.OperationId;
 import stmbench7.Parameters;
 import stmbench7.Setup;
@@ -10,7 +9,6 @@ import stmbench7.annotations.Transactional;
 import stmbench7.backend.Index;
 import stmbench7.core.Assembly;
 import stmbench7.core.ComplexAssembly;
-import stmbench7.core.IntIndexKey;
 import stmbench7.core.OperationFailedException;
 
 /**
@@ -19,7 +17,7 @@ import stmbench7.core.OperationFailedException;
  */
 public class Operation6 extends BaseOperation {
 
-	protected Index<IntIndexKey,ComplexAssembly> complexAssemblyIdIndex;
+	protected Index<Integer,ComplexAssembly> complexAssemblyIdIndex;
 
 	public Operation6(Setup oo7setup) {
 		this.complexAssemblyIdIndex = oo7setup.getComplexAssemblyIdIndex();
@@ -29,7 +27,7 @@ public class Operation6 extends BaseOperation {
 	@Transactional @ReadOnly
 	public int performOperation() throws OperationFailedException {
 		int complexAssemblyId = ThreadRandom.nextInt(Parameters.MaxComplexAssemblies) +1;
-		ComplexAssembly complexAssembly = complexAssemblyIdIndex.get(new IntIndexKey(complexAssemblyId));
+		ComplexAssembly complexAssembly = complexAssemblyIdIndex.get(complexAssemblyId);
 		if(complexAssembly == null) throw new OperationFailedException();
 		
 		ComplexAssembly superAssembly = complexAssembly.getSuperAssembly();
@@ -43,6 +41,7 @@ public class Operation6 extends BaseOperation {
 			performOperationInComplexAssembly((ComplexAssembly)siblingAssembly);
 			count++;
 		}
+		
 		return count;
 	}
 	

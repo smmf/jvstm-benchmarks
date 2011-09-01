@@ -2,13 +2,14 @@ package stmbench7.impl.core;
 
 import stmbench7.core.Manual;
 import stmbench7.core.Module;
+import stmbench7.core.RuntimeError;
 
 
 /**
  * STMBench7 benchmark Manual (see the specification).
  * Default implementation.
  */
-public class ManualImpl implements Manual {
+public class ManualImpl implements Manual, Cloneable {
 
     private final int id;
     private String title;
@@ -75,5 +76,32 @@ public class ManualImpl implements Manual {
 
 	public String getTitle() {
 		return title;
+	}
+	
+	@Override
+	public boolean equals(Object obj) {
+		if(! (obj instanceof Manual)) return false;
+		return ((Manual) obj).getId() == id;
+	}
+
+	@Override
+	public int hashCode() {
+		return id;
+	}
+	
+	@Override
+	public Object clone() {
+		try {
+			return super.clone();
+		}
+		catch(CloneNotSupportedException e) {
+			throw new RuntimeError(e);
+		}
+	}
+	
+	@Override
+	public String toString() {
+		return getClass().getName() + ": id=" + id + ", title=" + title + ", text=" +
+			text.substring(0, 10) + " (...) " + text.substring(text.length() - 10, text.length());
 	}
 }

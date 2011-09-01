@@ -14,7 +14,6 @@ import org.junit.Test;
 
 import stmbench7.backend.BackendFactory;
 import stmbench7.backend.Index;
-import stmbench7.core.IntIndexKey;
 import stmbench7.impl.backend.BackendFactoryImpl;
 
 /**
@@ -27,7 +26,7 @@ public class IndexTest {
 	 */
 	protected BackendFactory backendFactory;
 	
-	private Index<IntIndexKey,Integer> index, emptyIndex;
+	private Index<Integer,Integer> index, emptyIndex;
 	
 	public IndexTest() {
 		backendFactory = new BackendFactoryImpl();
@@ -40,12 +39,12 @@ public class IndexTest {
 		
 		for(int key = 0; key < 100; key++) {
 			int val = key * 2;
-			index.put(new IntIndexKey(key), val);
+			index.put(key, val);
 		}
 		
 		for(int key = 100; key >= 0; key -= 2) {
 			int val = key;
-			index.put(new IntIndexKey(key), val);
+			index.put(key, val);
 		}
 	}
 
@@ -54,14 +53,14 @@ public class IndexTest {
 	 */
 	@Test
 	public void testPut() {
-		emptyIndex.put(new IntIndexKey(5), 10);
-		emptyIndex.put(new IntIndexKey(10), 11);
-		emptyIndex.put(new IntIndexKey(1), 12);
-		emptyIndex.put(new IntIndexKey(7), 10);
-		assertTrue(emptyIndex.get(new IntIndexKey(5)) == 10);
-		assertTrue(emptyIndex.get(new IntIndexKey(10)) == 11);
-		assertTrue(emptyIndex.get(new IntIndexKey(1)) == 12);
-		assertTrue(emptyIndex.get(new IntIndexKey(7)) == 10);
+		emptyIndex.put(5, 10);
+		emptyIndex.put(10, 11);
+		emptyIndex.put(1, 12);
+		emptyIndex.put(7, 10);
+		assertTrue(emptyIndex.get(5) == 10);
+		assertTrue(emptyIndex.get(10) == 11);
+		assertTrue(emptyIndex.get(1) == 12);
+		assertTrue(emptyIndex.get(7) == 10);
 	}
 
 	/**
@@ -69,12 +68,12 @@ public class IndexTest {
 	 */
 	@Test
 	public void testPutIfAbsent() {
-		assertNull(index.putIfAbsent(new IntIndexKey(101), 111));
-		assertNull(index.putIfAbsent(new IntIndexKey(-101), 111));
-		assertTrue(index.putIfAbsent(new IntIndexKey(10), 111) == 10);
-		assertTrue(index.putIfAbsent(new IntIndexKey(-101), 222) == 111);
-		assertTrue(index.get(new IntIndexKey(10)) == 10);		
-		assertTrue(index.get(new IntIndexKey(-101)) == 111);		
+		assertNull(index.putIfAbsent(101, 111));
+		assertNull(index.putIfAbsent(-101, 111));
+		assertTrue(index.putIfAbsent(10, 111) == 10);
+		assertTrue(index.putIfAbsent(-101, 222) == 111);
+		assertTrue(index.get(10) == 10);		
+		assertTrue(index.get(-101) == 111);		
 	}
 
 	/**
@@ -82,14 +81,14 @@ public class IndexTest {
 	 */
 	@Test
 	public void testGet() {
-		assertNull(emptyIndex.get(new IntIndexKey(4)));
-		assertNull(index.get(new IntIndexKey(101)));
-		assertNull(index.get(new IntIndexKey(-101)));
+		assertNull(emptyIndex.get(4));
+		assertNull(index.get(101));
+		assertNull(index.get(-101));
 
 		for(int key = 0; key <= 100; key += 2)
-			assertTrue(index.get(new IntIndexKey(key)) == key);
+			assertTrue(index.get(key) == key);
 		for(int key = 1; key <= 100; key += 2)
-			assertTrue(index.get(new IntIndexKey(key)) == key * 2);
+			assertTrue(index.get(key) == key * 2);
 	}
 
 	/**
@@ -97,30 +96,30 @@ public class IndexTest {
 	 */
 	@Test
 	public void testGetRange() {
-		Iterator<Integer> range = index.getRange(new IntIndexKey(5), new IntIndexKey(9)).iterator();
+		Iterator<Integer> range = index.getRange(5, 9).iterator();
 		assertTrue(range.next() == 10);
 		assertTrue(range.next() == 6);
 		assertTrue(range.next() == 14);
 		assertTrue(range.next() == 8);
 		assertFalse(range.hasNext());
 		
-		range = index.getRange(new IntIndexKey(-5), new IntIndexKey(2)).iterator();
+		range = index.getRange(-5, 2).iterator();
 		assertTrue(range.next() == 0);
 		assertTrue(range.next() == 2);
 		assertFalse(range.hasNext());
 		
-		range = index.getRange(new IntIndexKey(98), new IntIndexKey(120)).iterator();
+		range = index.getRange(98, 120).iterator();
 		assertTrue(range.next() == 98);
 		assertTrue(range.next() == 99 * 2);
 		assertTrue(range.next() == 100);
 		assertFalse(range.hasNext());
 
-		range = index.getRange(new IntIndexKey(110), new IntIndexKey(120)).iterator();
+		range = index.getRange(110, 120).iterator();
 		assertFalse(range.hasNext());
-		range = index.getRange(new IntIndexKey(-120), new IntIndexKey(-110)).iterator();
+		range = index.getRange(-120, -110).iterator();
 		assertFalse(range.hasNext());
 
-		range = emptyIndex.getRange(new IntIndexKey(110), new IntIndexKey(120)).iterator();
+		range = emptyIndex.getRange(110, 120).iterator();
 		assertFalse(range.hasNext());
 	}
 
@@ -129,25 +128,25 @@ public class IndexTest {
 	 */
 	@Test
 	public void testRemove() {
-		assertFalse(emptyIndex.remove(new IntIndexKey(4)));
-		assertFalse(index.remove(new IntIndexKey(200)));
-		assertFalse(index.remove(new IntIndexKey(-20)));
+		assertFalse(emptyIndex.remove(4));
+		assertFalse(index.remove(200));
+		assertFalse(index.remove(-20));
 
-		assertTrue(index.remove(new IntIndexKey(20)));
-		assertFalse(index.remove(new IntIndexKey(20)));
-		assertNull(index.get(new IntIndexKey(20)));
+		assertTrue(index.remove(20));
+		assertFalse(index.remove(20));
+		assertNull(index.get(20));
 		
-		assertTrue(index.remove(new IntIndexKey(50)));
-		assertFalse(index.remove(new IntIndexKey(50)));
-		assertNull(index.get(new IntIndexKey(50)));
+		assertTrue(index.remove(50));
+		assertFalse(index.remove(50));
+		assertNull(index.get(50));
 
-		assertTrue(index.remove(new IntIndexKey(0)));
-		assertFalse(index.remove(new IntIndexKey(0)));
-		assertNull(index.get(new IntIndexKey(0)));
+		assertTrue(index.remove(0));
+		assertFalse(index.remove(0));
+		assertNull(index.get(0));
 
-		assertTrue(index.remove(new IntIndexKey(100)));
-		assertFalse(index.remove(new IntIndexKey(100)));
-		assertNull(index.get(new IntIndexKey(100)));
+		assertTrue(index.remove(100));
+		assertFalse(index.remove(100));
+		assertNull(index.get(100));
 	}
 
 	/**
@@ -173,18 +172,18 @@ public class IndexTest {
 		final int N = 10000;
 		long time = System.currentTimeMillis();
 		
-		Index<IntIndexKey,Integer> randomIndex = backendFactory.createIndex();
-		TreeMap<IntIndexKey,Integer> refIndex = new TreeMap<IntIndexKey,Integer>();
+		Index<Integer,Integer> randomIndex = backendFactory.createIndex();
+		TreeMap<Integer,Integer> refIndex = new TreeMap<Integer,Integer>();
 
 		Random random = new Random();
 		int max = Integer.MIN_VALUE, min = Integer.MAX_VALUE;
 		for(int n = 0; n < N; n++) {
 			int key = random.nextInt();
-			assertEquals(randomIndex.get(new IntIndexKey(key)), refIndex.get(new IntIndexKey(key)));
-			randomIndex.put(new IntIndexKey(key), key);
-			assertTrue(randomIndex.get(new IntIndexKey(key)) == key);
+			assertEquals(randomIndex.get(key), refIndex.get(key));
+			randomIndex.put(key, key);
+			assertTrue(randomIndex.get(key) == key);
 			
-			refIndex.put(new IntIndexKey(key), key);
+			refIndex.put(key, key);
 			
 			max = Math.max(max, key);
 			min = Math.min(min, key);
@@ -192,9 +191,9 @@ public class IndexTest {
 
 		for(int n = 0; n < N; n++) {
 			int key = random.nextInt();
-			Integer val = randomIndex.putIfAbsent(new IntIndexKey(key), key);
-			assertEquals(refIndex.get(new IntIndexKey(key)), val);
-			if(val == null) refIndex.put(new IntIndexKey(key), key);
+			Integer val = randomIndex.putIfAbsent(key, key);
+			assertEquals(refIndex.get(key), val);
+			if(val == null) refIndex.put(key, key);
 		}
 
 		Iterator<Integer> it = randomIndex.iterator(), refIt = refIndex.values().iterator();
@@ -208,18 +207,18 @@ public class IndexTest {
 		assertFalse(it.hasNext());
 		assertFalse(refIt.hasNext());
 		
-		it = randomIndex.getRange(new IntIndexKey(min/2), new IntIndexKey(max/2)).iterator();
-		refIt = refIndex.subMap(new IntIndexKey(min/2), new IntIndexKey(max/2)).values().iterator();
+		it = randomIndex.getRange(min/2, max/2).iterator();
+		refIt = refIndex.subMap(min/2, max/2).values().iterator();
 		while(it.hasNext()) 
 			assertEquals(it.next(), refIt.next());
 		assertFalse(refIt.hasNext());
 		
 		for(int n = 0; n < N; n++) {
 			int key = random.nextInt();
-			boolean res = randomIndex.remove(new IntIndexKey(key));
-			boolean refRes = ( refIndex.remove(new IntIndexKey(key)) != null ); 
+			boolean res = randomIndex.remove(key);
+			boolean refRes = ( refIndex.remove(key) != null ); 
 			assertEquals(refRes, res);
-			assertNull(randomIndex.get(new IntIndexKey(key)));
+			assertNull(randomIndex.get(key));
 		}
 		
 		time = System.currentTimeMillis() - time;

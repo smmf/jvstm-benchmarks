@@ -4,17 +4,19 @@ import stmbench7.annotations.NonAtomic;
 import stmbench7.annotations.ThreadLocal;
 import stmbench7.core.OperationFailedException;
 
-import stmbench7.core.Operation;
-
 /**
- * An interface representing a class that executes a given operation.
- * Can set up a transaction and handle aborts.
+ * An interface representing a class that executes a given operation. Can set up
+ * a transaction and handle aborts.
  */
 @NonAtomic
 @ThreadLocal
 public interface OperationExecutor {
 
 	int execute() throws OperationFailedException;
+
 	int getLastOperationTimestamp();
-	public Operation getOp();
+
+	boolean isOperationReadOnly();
+
+	int getLastLocalOperationTimestamp();
 }

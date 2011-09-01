@@ -7,13 +7,17 @@ public class JVSTMStats {
 	private static int[] roTransactions 	= new int[Parameters.numThreads];
 	private static int[] conflicts 	= new int[Parameters.numThreads];
 	private static int[] restarts 	= new int[Parameters.numThreads];
-	private static int[] aborts 		= new int[Parameters.numThreads];
 
-	public static void noteReadWriteTransaction(int id) {
+	public static void noteTransaction(boolean readOnly, Short id) {
+		if (readOnly) noteReadOnlyTransaction(id);
+		else noteReadWriteTransaction(id);
+	}
+
+	private static void noteReadWriteTransaction(int id) {
 		rwTransactions[id] = rwTransactions[id] + 1;
 	}
 
-	public static void noteReadOnlyTransaction(int id) {
+	private static void noteReadOnlyTransaction(int id) {
 		roTransactions[id] = roTransactions[id] + 1;
 	}
 
@@ -23,10 +27,6 @@ public class JVSTMStats {
 
 	public static void noteRestart(int id) {
 		restarts[id] = restarts[id] + 1;
-	}
-
-	public static void noteAbort(int id) {
-		aborts[id] = aborts[id] + 1;
 	}
 
 	private static int getRwTransactions() {
@@ -69,24 +69,13 @@ public class JVSTMStats {
 		return res;
 	}
 
-	private static int getAborts() {
-		int res = 0;
-
-		for (int i = 0; i < aborts.length; ++i) {
-			res += aborts[i];
-		}
-
-		return res;
-	}
-
 	public static void printStats() {
-		System.out.printf("RW = %d, RO = %d, Conflicts = %d (%f%%), Restarts = %d (%f%%), Aborts = %d\n",
+		System.out.printf("RW = %d, RO = %d, Conflicts = %d (%f%%), Restarts = %d (%f%%)\n",
 				getRwTransactions(),
 				getRoTransactions(),
 				getConflicts(),
 				((getConflicts() * 100.0) / getRwTransactions()),
 				getRestarts(),
-				((getRestarts() * 100.0) / getRwTransactions()),
-				getAborts());
+				((getRestarts() * 100.0) / getRwTransactions()));
 	}
 }

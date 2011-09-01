@@ -1,6 +1,5 @@
 package stmbench7.operations;
 
-
 import stmbench7.OperationId;
 import stmbench7.Setup;
 import stmbench7.annotations.ReadOnly;
@@ -22,7 +21,6 @@ public class Traversal8 extends BaseOperation {
 
 	@Override
 	@Transactional @ReadOnly
-	
 	public int performOperation() {
 		Manual manual = module.getManual();
 		return traverse(manual);

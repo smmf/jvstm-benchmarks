@@ -12,7 +12,7 @@ import stmbench7.annotations.Update;
  * with the same build date.
  */
 @Atomic
-public interface LargeSet<E> extends Iterable<E> {
+public interface LargeSet<E extends Comparable<E>> extends Iterable<E> {
 
 	@Update
 	boolean add(E element);

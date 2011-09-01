@@ -6,10 +6,10 @@ import stmbench7.annotations.Immutable;
 import stmbench7.core.Operation;
 
 @Immutable
-public class OperationExecutorFactoryImpl extends OperationExecutorFactory {
+public class JVSTMOperationExecutorFactory extends OperationExecutorFactory {
 	
 	public OperationExecutor createOperationExecutor(Operation op) {
-		return new OperationExecutorImpl(op);
+		return new JVSTMOperationExecutor(op);
 	}
 
 }

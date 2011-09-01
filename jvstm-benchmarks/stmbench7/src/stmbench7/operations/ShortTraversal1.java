@@ -1,6 +1,5 @@
 package stmbench7.operations;
 
-
 import stmbench7.OperationId;
 import stmbench7.Setup;
 import stmbench7.ThreadRandom;
@@ -31,7 +30,6 @@ public class ShortTraversal1 extends BaseOperation {
 
 	@Override
 	@Transactional @ReadOnly
-	
 	public int performOperation() throws OperationFailedException {
 		ComplexAssembly designRoot = module.getDesignRoot();
 		return traverse(designRoot);

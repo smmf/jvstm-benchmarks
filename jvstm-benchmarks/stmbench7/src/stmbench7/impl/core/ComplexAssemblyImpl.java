@@ -7,7 +7,6 @@ import stmbench7.core.BaseAssembly;
 import stmbench7.core.ComplexAssembly;
 import stmbench7.core.Module;
 import stmbench7.core.RuntimeError;
-import stmbench7.impl.backend.ImmutableCollectionImpl;
 import stmbench7.impl.backend.SmallSetImpl;
 
 /**
@@ -17,7 +16,7 @@ import stmbench7.impl.backend.SmallSetImpl;
 public class ComplexAssemblyImpl extends AssemblyImpl implements ComplexAssembly {
 
     private SmallSetImpl<Assembly> subAssemblies;
-    private final short level; 
+    private short level; 
     
     public ComplexAssemblyImpl(int id, String type, int buildDate, Module module, ComplexAssembly superAssembly) {
     	super(id, type, buildDate, module, superAssembly);
@@ -46,7 +45,7 @@ public class ComplexAssemblyImpl extends AssemblyImpl implements ComplexAssembly
     }
     
     public ImmutableCollection<Assembly> getSubAssemblies() {
-    	return new ImmutableCollectionImpl<Assembly>(subAssemblies);
+    	return subAssemblies.immutableView();
     }
     
     public short getLevel() {
@@ -57,5 +56,29 @@ public class ComplexAssemblyImpl extends AssemblyImpl implements ComplexAssembly
     public void clearPointers() {
     	super.clearPointers();
     	subAssemblies = null;
+    	level = -1;
+    }
+    
+	@Override
+	public boolean equals(Object obj) {
+		if(! (obj instanceof ComplexAssembly)) return false;
+		return super.equals(obj);
+	}
+
+    @SuppressWarnings("unchecked")
+	@Override
+	public ComplexAssemblyImpl clone() {
+		ComplexAssemblyImpl clone = (ComplexAssemblyImpl) super.clone();
+		clone.subAssemblies = (SmallSetImpl<Assembly>) subAssemblies.clone();
+		return clone;
+	}
+    
+    @Override
+    public String toString() {
+    	String subAssString = "{ ";
+    	for(Assembly subAssembly : subAssemblies) 
+    		subAssString += subAssembly.getId() + " ";
+    	subAssString += "}";
+    	return super.toString() + ", level=" + level + ", subAssemblies=" + subAssString;
     }
 }

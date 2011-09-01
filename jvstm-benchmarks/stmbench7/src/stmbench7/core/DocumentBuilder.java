@@ -5,7 +5,6 @@ import stmbench7.annotations.Immutable;
 import stmbench7.backend.BackendFactory;
 import stmbench7.backend.IdPool;
 import stmbench7.backend.Index;
-import stmbench7.core.DocumentBuilder;
 
 /**
  * Used to create and destroy document elements while
@@ -16,9 +15,9 @@ import stmbench7.core.DocumentBuilder;
 public class DocumentBuilder extends DesignObjBuilder {
 
 	private final IdPool idPool;
-	private final Index<StringIndexKey,Document> documentTitleIndex;
+	private final Index<String,Document> documentTitleIndex;
 	
-	public DocumentBuilder(Index<StringIndexKey,Document> documentTitleIndex) {
+	public DocumentBuilder(Index<String,Document> documentTitleIndex) {
 		this.documentTitleIndex = documentTitleIndex;
 		idPool = BackendFactory.instance.createIdPool(Parameters.MaxCompParts);
 	}
@@ -30,14 +29,14 @@ public class DocumentBuilder extends DesignObjBuilder {
 					      "I am the documentation for composite part #" + compositePartId + "\n");
 
 		Document documentation = designObjFactory.createDocument(docId, docTitle, docText);
-		documentTitleIndex.put(new StringIndexKey(docTitle), documentation);
+		documentTitleIndex.put(docTitle, documentation);
 		
 		return documentation;
 	}
 
 	public void unregisterAndRecycleDocument(Document document) {
 		document.setPart(null);
-		documentTitleIndex.remove(new StringIndexKey(document.getTitle()));
+		documentTitleIndex.remove(document.getTitle());
 		idPool.putUnusedId(document.getDocumentId());
 	}
 }

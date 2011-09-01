@@ -1,6 +1,9 @@
 package stmbench7.impl.jvstm.backend;
 
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Iterator;
+import java.util.List;
 
 import jvstm.VBox;
 import jvstm.util.Cons;
@@ -16,13 +19,11 @@ public class BagImpl<E> implements Iterable<E> {
 	}
 
 	public BagImpl(BagImpl<E> bag){
-		//TODO: really needed???
 		throw new Error("BagImpl(BagImpl<E> bag) not implemented");
 	}
-	
-	public boolean add(E element) {
+
+	public void add(E element) {
 		elements.put(elements.get().cons(element));
-		return true;
 	}
 
 	public boolean remove(E element) {
@@ -40,6 +41,9 @@ public class BagImpl<E> implements Iterable<E> {
 	// Iterable<E> methods
 
 	public Iterator<E> iterator() {
-		return elements.get().iterator();
+		List<E> snapshot = new ArrayList<E>();
+		for(E element : elements.get()) snapshot.add(element);
+		Collections.reverse(snapshot);
+		return snapshot.iterator();
 	}
 }

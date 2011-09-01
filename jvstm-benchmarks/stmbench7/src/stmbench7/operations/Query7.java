@@ -1,13 +1,11 @@
 package stmbench7.operations;
 
-
 import stmbench7.OperationId;
 import stmbench7.Setup;
 import stmbench7.annotations.ReadOnly;
 import stmbench7.annotations.Transactional;
 import stmbench7.backend.Index;
 import stmbench7.core.AtomicPart;
-import stmbench7.core.IntIndexKey;
 
 /**
  * Query Q7 (see the specification).
@@ -15,7 +13,7 @@ import stmbench7.core.IntIndexKey;
  */
 public class Query7 extends BaseOperation {
 
-    protected Index<IntIndexKey,AtomicPart> partIdIndex;
+    protected Index<Integer,AtomicPart> partIdIndex;
 
     public Query7(Setup oo7setup) {
     	this.partIdIndex = oo7setup.getAtomicPartIdIndex();
@@ -23,7 +21,6 @@ public class Query7 extends BaseOperation {
 
     @Override
     @Transactional @ReadOnly
-	
     public int performOperation() {
     	int result = 0;
     	for(AtomicPart part : partIdIndex) {

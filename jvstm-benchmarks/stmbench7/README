@@ -1,54 +1,106 @@
-1. STMBench7 - Introduction
-----------------------------------------------------------------------
+STMBench7 Java
+==============
+	STMBench7 Java is built using Apache Ant building system. 
+	The building process consists in compiling the STMBench7 java
+	code and instrumenting the bytecode. 
 
-STMBench7 is a benchmark for evaluating software transactional memory
-(STM) implementations. For documentation, please refer to the project
-web page: 
+	Note that STMBench7 successfully passes the Java-to-Java 
+	precompilation phase of TMJava, however, this action is 
+	idempotent as no __transaction{} blocks are used in STMBench7 
+	but each transaction in the code is already an annotated method.
 
-    http://lpd.epfl.ch/site/research/tmeval
-    
-Important note. The benchmark is still a work in progress. The code
-and the specification may still undergo many, maybe significant,
-changes that should reflect the feedback we will get.
-    
-Any suggestions, comments or criticism are more than welcome and
-should be send to Michal Kapalka (e-mail: firstname.lastname@epfl.ch).
-    
-    
-2. Running the Benchmark
-----------------------------------------------------------------------
+	For automatic instrumentation of transactional accesses
+	STMBench7 uses the Deuce bytecode instrumentation framework, 
+	which detects bytecode annotation to instrument memory accesses
+	with a dedicated TM backend.	
 
-The Java version of the benchmark requires JRE 1.5 or newer. The
-JAR file provided with the default benchmark distribution contains
-all the necessary binary files to run the benchmark.
+PREREQUISITES
+=============
+	In order the build to work properly and resolve jar dependencies, 
+	you have to download the Deuce agent. Deuce can be downloaded from:
 
-For example,
+	> http://www.velox-project.eu/software/deuce
+	> http://sites.google.com/site/deucestm	
 
-	java -jar stmbench7-07.03.2008-beta.jar
+ 	Set the the deuceAgent path in file build.xml under variable 
+	named 'agent'.
 	
-will run the current version of the benchmark with the default
-parameters (shown at the beginning of a benchmark run). To see the
-command-line syntax, run the benchmark with the "-h" or "--help"
-argument.
+	In addition, you must set the path towards your local Java RunTime 
+	jar archive (e.g., /usr/lib/jvm/java-1.6.0-openjdk/jre/lib/rt.jar)
 
-Note that the benchmark requires a lot of memory, so it may be
-necessary to increase the JVM heap size (with the "-Xmx" parameter
-of the "java" program).
-
-3. Compiling the Benchmark
-----------------------------------------------------------------------
-
-The build system of the benchmark now uses Apache Ant. The Ant targets
-provided are: "compile" (to compile the benchmark), "jar" (to generate
-a JAR file), and "dist" (to make a tgz archive for distribution). For
-example,
-
-	ant jar
+	STMBench7 Java has been successfully tested with 
+	  * ant 1.7.1
+	  * java 1.6.0_20
+	  * deuceAgent 1.3.0
 	
-will compile the benchmark and generate the JAR file. JDK 1.5 or
-newer is required to build the benchmark from sources.
+	Optionnally, TMJava variable 'precompiler' can be set to 
+	the path of TMJava. TMJava can be downloaded from:
 
-It is simple, however, to compile the benchmark using only "javac", 
-by compiling together all the Java files in the "src" directory,
-except ones in the "test" subdirectory (those require JUnit and
-can be compiled separately).
+	> http://www.velox-project.eu/software/tmjava
+	> http://tinystm.org/tmjava
+	
+ORGANIZATION
+============
+	build.xml	 the xml build file
+	src/   		 the source directory
+	COPYING		 licence
+	README		 install information
+	README.sb7	 STMBench7 overview
+
+INSTALL
+=======
+	Set first the appropriate variable 'agent' and 'javart.home' 
+	in build.xml
+	
+	> ant clean
+	> ant 
+	> ant instrument
+	> ant instrument-rt
+
+	You may test the benchmark with:
+	
+	> ant test	
+
+	* which essentially runs java with the following arguments on 
+	the command line:
+	  -Dorg.deuce.exclude="java.lang.Enum,sun.*" 
+	  (for classes that must not be instrumented)	  
+	  -Dorg.deuce.transaction.contextClass=org.deuce.transaction.lsacm.Context 	    
+	  (specifying to run the LSA library including a Contention Manager provided with Deuce)
+	  -Xbootclasspath/p:rt_instrumented.jar:deuceAgent.jar, offline instrumentation 
+	  (to support boot classloader) 
+	  -cp jars/stmbench7-VELOX-v1.2_instrumented.jar indicating the jars
+	  
+	* and runs STMBench7 with options:
+	  -l 1		     during 1 second
+	  -t 16  	     running 16 threads 
+	  -w rw 	     workload mixed of reads and writes
+	  -g stm	     with the default Deuce STM algorithm
+	  --no-traversals    disable traversal operations
+
+
+OPTIONS
+=======
+	 -h help          -- print usage
+         -t numThreads    -- set the number of threads (default: 1)
+	 -l length        -- set the length of the benchmark, in seconds (default: 10)
+         -w r|rw|w        -- set the workload: r = read-dominated, w = write-dominated
+		          rw = read-write (default: read-dominated)
+         -g coarse|medium|fine|none|stm -- set synchronization method (default: coarse)
+	 -s stmInitializerClass         -- set STM initializer class (default: none)
+         --no-traversals  -- do not use long traversals
+         --no-sms         -- do not use structural modification operations
+         --seq-replay     -- replay the execution in a single thread
+	 		  (checks for opacity violations)
+         --ttc-histograms -- print TTC histograms to stdout
+         
+	 NB. the benchmark needs a lot of lot of memory, so the -Xmx option of Java 
+	 might be necessary.
+
+
+CONTACT
+=======
+	http://lpd.epfl.ch/transactions	
+	Vincent Gramoli (vincent.gramoli@epfl.ch)
+	Michal Kapalka (http://kapalka.eu)
+	

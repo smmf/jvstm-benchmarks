@@ -6,7 +6,6 @@ import stmbench7.core.ComplexAssembly;
 import stmbench7.core.CompositePart;
 import stmbench7.core.Module;
 import stmbench7.impl.backend.BagImpl;
-import stmbench7.impl.backend.ImmutableCollectionImpl;
 
 /**
  * STMBench7 benchmark Base Assembly (see the specification).
@@ -14,7 +13,7 @@ import stmbench7.impl.backend.ImmutableCollectionImpl;
  */
 public class BaseAssemblyImpl extends AssemblyImpl implements BaseAssembly {
 
-    private BagImpl<CompositePart> components;
+    protected BagImpl<CompositePart> components;
 
     public BaseAssemblyImpl(int id, String type, int buildDate, Module module, ComplexAssembly superAssembly) {
     	super(id, type, buildDate, module, superAssembly);
@@ -40,12 +39,34 @@ public class BaseAssemblyImpl extends AssemblyImpl implements BaseAssembly {
     }
 
     public ImmutableCollection<CompositePart> getComponents() {
-    	return new ImmutableCollectionImpl<CompositePart>(components);
+    	return components.immutableView();
     }
     
     @Override
     public void clearPointers() {
     	super.clearPointers();
     	components = null;
+    }
+
+	@Override
+	public boolean equals(Object obj) {
+		if(! (obj instanceof BaseAssembly)) return false;
+		return super.equals(obj);
+	}
+
+    @SuppressWarnings("unchecked")
+	@Override
+	public BaseAssemblyImpl clone() {
+		BaseAssemblyImpl clone = (BaseAssemblyImpl) super.clone();
+		clone.components = (BagImpl<CompositePart>) components.clone();
+		return clone;
+	}
+    
+    @Override
+    public String toString() {
+    	String componentIds = "{ ";
+    	for(CompositePart component : components) componentIds += component.getId() + " ";
+    	componentIds += "}";
+    	return super.toString() + ", components=" + componentIds; 
     }
 }

@@ -9,7 +9,6 @@ import stmbench7.annotations.Update;
 import stmbench7.backend.Index;
 import stmbench7.backend.LargeSet;
 import stmbench7.core.AtomicPart;
-import stmbench7.core.IntIndexKey;
 
 /**
  * Traversal T3, variant (a) (see the specification).
@@ -17,7 +16,7 @@ import stmbench7.core.IntIndexKey;
  */
 public class Traversal3a extends Traversal1 {
 
-	Index<IntIndexKey,LargeSet<AtomicPart>> partBuildDateIndex;
+	Index<Integer,LargeSet<AtomicPart>> partBuildDateIndex;
 
 	public Traversal3a(Setup oo7setup) {
 		super(oo7setup);

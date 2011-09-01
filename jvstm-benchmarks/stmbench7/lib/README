@@ -2,3 +2,6 @@ The jvstm.jar goes here.  When running the benchmarks script top-level script
 the JVSTM to test will automatically be copied to this directory with the name
 'jvstm.jar'.
 
+Also, don't forget to add here the 'deuceAgent.jar' file. See the README file
+at the root directory for more information about the deuce jar.
+

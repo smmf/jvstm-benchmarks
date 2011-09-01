@@ -3,6 +3,7 @@ package stmbench7.impl.jvstm.core;
 import jvstm.VBox;
 import stmbench7.core.Manual;
 import stmbench7.core.Module;
+import stmbench7.core.RuntimeError;
 
 public class ManualImpl implements Manual {
 
@@ -19,11 +20,6 @@ public class ManualImpl implements Manual {
 	}
 
 	public ManualImpl(ManualImpl source) {
-		//TODO: really needed???
-//		this.title = source.title;
-//		this.id = source.id;
-//		this.text = source.text;
-//		this.module = source.module;
 		throw new Error("ManualImpl(ManualImpl source) not implemented");
 	}
 
@@ -40,8 +36,7 @@ public class ManualImpl implements Manual {
 
 			position = newPosition + 1;
 			count++;
-		}
-		while(position < textLen);
+		} while(position < textLen);
 
 		return count;
 	}
@@ -77,4 +72,29 @@ public class ManualImpl implements Manual {
 		return title;
 	}
 
+	@Override
+	public boolean equals(Object obj) {
+		if(!(obj instanceof Manual)) return false;
+		return ((Manual) obj).getId() == id;
+	}
+
+	@Override
+	public int hashCode() {
+		return id;
+	}
+
+	@Override
+	public Object clone() {
+		try {
+			return super.clone();
+		} catch(CloneNotSupportedException e) {
+			throw new RuntimeError(e);
+		}
+	}
+
+	@Override
+	public String toString() {
+		return getClass().getName() + ": id=" + id + ", title=" + title + ", text=" +
+		text.get().substring(0, 10) + " (...) " + text.get().substring(text.get().length() - 10, text.get().length());
+	}
 }

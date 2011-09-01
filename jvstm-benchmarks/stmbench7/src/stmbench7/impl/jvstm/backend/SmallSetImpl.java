@@ -1,6 +1,9 @@
 package stmbench7.impl.jvstm.backend;
 
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Iterator;
+import java.util.List;
 
 import jvstm.util.VLinkedSet;
 import stmbench7.annotations.ContainedInAtomic;
@@ -15,7 +18,6 @@ public class SmallSetImpl<E> implements Iterable<E> {
 	}
 
 	public SmallSetImpl(SmallSetImpl<E> source) {
-		//TODO: ever called?
 		throw new Error("SmallSetImpl(SmallSetImpl<E> source) not implemented");
 	}
 
@@ -36,6 +38,9 @@ public class SmallSetImpl<E> implements Iterable<E> {
 	}
 
 	public Iterator<E> iterator() {
-		return elements.iterator();
+		List<E> snapshot = new ArrayList<E>();
+		for(E element : elements) snapshot.add(element);
+		Collections.reverse(snapshot);
+		return snapshot.iterator();
 	}
 }

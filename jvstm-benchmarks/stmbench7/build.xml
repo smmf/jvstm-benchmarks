@@ -1,17 +1,22 @@
-<?xml version="1.0"?>
+<?xml version="1.1"?>
 <project name="stmbench7" default="compile" basedir=".">
-
-	<property name="version" value="07.03.2008-beta" />
-	<property name="build.dir" location="classes"/>
-	<property name="java.src.dir" location="src"/>
+	
+	<property name="version" value="1.2" />
+	<property name="benchname" value="stmbench7-${version}" />
+	
+	<property name="build.dir" value="classes" />
+	<property name="java.src.dir" value="src" />
+	<property name="dist.dir" value="dist" />
 	<property name="lib.dir" location="lib"/>
 
+	<!-- CONFIG -->
 	<property name="MIN_HEAP" value="2G"/>
 	<property name="MAX_HEAP" value="3G"/>
-
-	<property name="dist.dir" value="dist" />
 	
-	<property name="benchname" value="stmbench7-${version}" />
+	<property name="javart.home" value="SET_PATH_TO_rt.jar" />
+	<property name="agent" value="${lib.dir}/deuceAgent.jar" />
+	<property name="precompiler" value="${lib.dir}/SET_PRECOMPILER_TO_tmjava.jar" />
+	<!-- END_CONFIG -->
 
 	<path id="project.class.path">
 		<pathelement path="${build.dir}"/>
@@ -22,13 +27,15 @@
 
 	<target name="-init" >
 		<mkdir dir="${build.dir}"/>
+		<mkdir dir="${dist.dir}"/>
 	</target>
 
 	<target name="clean-all" description="Removes any generated files">
 		<delete dir="${build.dir}"/>
+		<delete dir="${dist.dir}"/>
 	</target>
 
-	<target name="compile" depends="-init, -libs" description="Compiles all the source code">
+	<target name="compile" depends="-init, -libs" description="Compiles STMbench7">
 		<antcall target="-compile-libs"/>
 		<antcall target="-compile-no-libs"/>
 	</target>
@@ -45,18 +52,55 @@
 	<target name="-compile-no-libs" unless="jvstm.present">
 		<fail message="jvstm.jar not found in libs dir: ${lib.dir}"/>
 	</target>
-	
+
 	<target name="-libs"> 
 		<available file="${lib.dir}/jvstm.jar" property="jvstm.present"/>
 	</target>
 
-	<target name="jar" depends="compile">
-		<jar basedir="${build.dir}" destfile="${benchname}.jar">
+	<target name="jar" depends="compile" description="Java-archive STMbench7">
+		<jar basedir="${build.dir}" destfile="${dist.dir}/${benchname}.jar">
 			<manifest>
 				<attribute name="Main-Class" value="stmbench7.Benchmark" />
 			</manifest>
 		</jar>
 	</target>
+
+	<target name="instrument-rt" description="Instrument the runtime classes">
+		<java fork="true" classpath="${agent}" classname="org.deuce.transform.asm.Agent">
+			<jvmarg value="-Dorg.deuce.exclude=java.lang.Enum,sun.*" />
+			<arg line="${javart.home}/rt.jar ${dist.dir}/rt_instrumented.jar" />
+		</java>
+	</target>
+
+	<target name="instrument" depends="jar" description="Instrument the benchmark">
+		<java  fork="true" classpath="${agent}" classname="org.deuce.transform.asm.Agent">
+			<jvmarg value="-Dorg.deuce.exclude=java.lang.Enum,sun.*" />
+			<arg line="${dist.dir}/${benchname}.jar ${dist.dir}/${benchname}_instrumented.jar" />
+		</java>
+	</target>
+
+	<target name="tmjava">
+		<java  classname="tm.TMJavaParser" fork="true" resultproperty="java.result">
+			<arg line="-sourcepath ${java.src.dir}/stmbench7:."/>
+			<arg line="-e ${java.src.dir}/stmbench7/test/backend/IndexTest.java"/>
+			<arg line="${java.src.dir}/stmbench7"/>
+			<classpath>
+				<pathelement location="${precompiler}"/> 
+				<pathelement location="${agent}"/>
+				<pathelement location="."/>
+			</classpath>
+		</java>
+	</target>
+
+	<target name="test" depends="instrument,instrument-rt" description="Run deuce STM test">
+		<java fork="true" classname="stmbench7.Benchmark">
+			<jvmarg value="-Dorg.deuce.exclude=java.lang.Enum,sun.*" /> 
+			<jvmarg value="-Dorg.deuce.transaction.contextClass=org.deuce.transaction.lsa.Context" />
+			<jvmarg value="-Xbootclasspath/p:${dist.dir}/rt_instrumented.jar:${agent}:${dist.dir}/${benchname}_instrumented.jar" />
+			<arg line="-l 1 -t 16 -w r --seq-replay -g stm --no-traversals -s stmbench7.impl.deucestm.DeuceSTMInitializer" />
+		</java>  
+	</target>
+
 
 	<target name="-run" depends="compile, -testArgs">
 		<antcall target="-run-args"/>
@@ -101,7 +145,7 @@
 
 	<target name="run-jvstm" description="Runs the benchmark with the jvstm">
 		<antcall target="-run">
-			<param name="synch" value="-g stm -s stmbench7.impl.jvstm.SynchMethodInitializerJVSTM"/>
+			<param name="synch" value="-g stm -s stmbench7.impl.jvstm.JVSTMInitializer"/>
 		</antcall>
 	</target>
 </project>

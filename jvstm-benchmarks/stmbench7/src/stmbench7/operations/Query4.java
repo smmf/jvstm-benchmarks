@@ -10,7 +10,6 @@ import stmbench7.backend.Index;
 import stmbench7.core.BaseAssembly;
 import stmbench7.core.Document;
 import stmbench7.core.OperationFailedException;
-import stmbench7.core.StringIndexKey;
 
 /**
  * Query Q4 / Short traversal ST4 (see the specification).
@@ -18,7 +17,7 @@ import stmbench7.core.StringIndexKey;
  */
 public class Query4 extends BaseOperation {
 
-    Index<StringIndexKey,Document> documentTitleIndex;
+    Index<String,Document> documentTitleIndex;
 
     public Query4(Setup oo7setup) {
     	this.documentTitleIndex = oo7setup.getDocumentTitleIndex();
@@ -31,7 +30,7 @@ public class Query4 extends BaseOperation {
 
     	for(int i = 0; i < 100; i++) {
     		int partId = ThreadRandom.nextInt(Parameters.MaxCompParts) + 1;
-    		StringIndexKey docTitle = new StringIndexKey("Composite Part #" + partId);
+    		String docTitle = "Composite Part #" + partId;
 
     		Document document = documentTitleIndex.get(docTitle);
     		if(document == null) continue;

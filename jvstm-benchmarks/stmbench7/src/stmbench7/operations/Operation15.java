@@ -7,7 +7,6 @@ import stmbench7.annotations.Update;
 import stmbench7.backend.Index;
 import stmbench7.backend.LargeSet;
 import stmbench7.core.AtomicPart;
-import stmbench7.core.IntIndexKey;
 import stmbench7.core.OperationFailedException;
 
 /**
@@ -16,7 +15,7 @@ import stmbench7.core.OperationFailedException;
  */
 public class Operation15 extends Query1 {
 
-	protected Index<IntIndexKey,LargeSet<AtomicPart>> partBuildDateIndex;
+	protected Index<Integer,LargeSet<AtomicPart>> partBuildDateIndex;
 	
 	public Operation15(Setup oo7setup) {
 		super(oo7setup);

@@ -8,7 +8,6 @@ import stmbench7.annotations.ReadOnly;
 import stmbench7.annotations.Transactional;
 import stmbench7.backend.Index;
 import stmbench7.core.AtomicPart;
-import stmbench7.core.IntIndexKey;
 import stmbench7.core.OperationFailedException;
 
 /**
@@ -17,7 +16,7 @@ import stmbench7.core.OperationFailedException;
  */
 public class Query1 extends BaseOperation {
 
-	Index<IntIndexKey,AtomicPart> partIdIndex;
+	Index<Integer,AtomicPart> partIdIndex;
 
 	public Query1(Setup oo7setup) {
 		this.partIdIndex = oo7setup.getAtomicPartIdIndex();
@@ -30,7 +29,7 @@ public class Query1 extends BaseOperation {
 		
 		for(int i = 0; i < 10; i++) {
 			int partId = ThreadRandom.nextInt(Parameters.MaxAtomicParts) + 1;
-			AtomicPart part = partIdIndex.get(new IntIndexKey(partId));
+			AtomicPart part = partIdIndex.get(partId);
 
 			if(part == null) continue;
 

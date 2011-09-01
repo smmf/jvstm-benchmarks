@@ -11,95 +11,92 @@ import stmbench7.core.ComplexAssembly;
 import stmbench7.core.CompositePart;
 import stmbench7.core.CompositePartBuilder;
 import stmbench7.core.Document;
-import stmbench7.core.IntIndexKey;
 import stmbench7.core.Module;
 import stmbench7.core.ModuleBuilder;
-import stmbench7.core.OperationFailedException;
-import stmbench7.core.RuntimeError;
-import stmbench7.core.StringIndexKey;
 import stmbench7.operations.SetupDataStructure;
 
 /**
- * Sets up the benchmark structures according to given parameters,
- * including indexes.
+ * Sets up the benchmark structures according to given parameters, including
+ * indexes.
  */
 @Immutable
 public class Setup {
-    
-    protected Module module;
 
-    protected Index<IntIndexKey,AtomicPart> atomicPartIdIndex;
-    protected Index<IntIndexKey,LargeSet<AtomicPart>> atomicPartBuildDateIndex;
-    protected Index<StringIndexKey,Document> documentTitleIndex;
-    protected Index<IntIndexKey,CompositePart> compositePartIdIndex;
-    protected Index<IntIndexKey,BaseAssembly> baseAssemblyIdIndex;
-    protected Index<IntIndexKey,ComplexAssembly> complexAssemblyIdIndex;
+	protected Module module;
 
-    protected CompositePartBuilder compositePartBuilder;
-    protected ModuleBuilder moduleBuilder;
-    
-    public Setup() {
-    	BackendFactory backendFactory = BackendFactory.instance;
-    	
-    	atomicPartIdIndex = backendFactory.<IntIndexKey,AtomicPart>createIndex();
-    	atomicPartBuildDateIndex = backendFactory.<IntIndexKey,LargeSet<AtomicPart>>createIndex();
-    	documentTitleIndex = backendFactory.<StringIndexKey,Document>createIndex();
-    	compositePartIdIndex = backendFactory.<IntIndexKey,CompositePart>createIndex();
-    	baseAssemblyIdIndex = backendFactory.<IntIndexKey,BaseAssembly>createIndex();
-    	complexAssemblyIdIndex = backendFactory.<IntIndexKey,ComplexAssembly>createIndex();    	
+	protected Index<Integer, AtomicPart> atomicPartIdIndex;
+	protected Index<Integer, LargeSet<AtomicPart>> atomicPartBuildDateIndex;
+	protected Index<String, Document> documentTitleIndex;
+	protected Index<Integer, CompositePart> compositePartIdIndex;
+	protected Index<Integer, BaseAssembly> baseAssemblyIdIndex;
+	protected Index<Integer, ComplexAssembly> complexAssemblyIdIndex;
 
-    	compositePartBuilder = new CompositePartBuilder(compositePartIdIndex,
-    			documentTitleIndex,	atomicPartIdIndex, atomicPartBuildDateIndex);
-    	moduleBuilder = new ModuleBuilder(baseAssemblyIdIndex, complexAssemblyIdIndex);
-    	
-    	SetupDataStructure setupOperation = new SetupDataStructure(this);
-    	OperationExecutor operationExecutor =
-    		OperationExecutorFactory.instance.createOperationExecutor(setupOperation);
-    	try {
-    		operationExecutor.execute();
-    	}
-    	catch(OperationFailedException e) {
-    		throw new RuntimeError("Unexpected failure of the setup operation");
-    	}
-    	module = setupOperation.getModule();
-    }
-    
-	public Index<IntIndexKey, LargeSet<AtomicPart>> getAtomicPartBuildDateIndex() {
+	protected CompositePartBuilder compositePartBuilder;
+	protected ModuleBuilder moduleBuilder;
+
+	public Setup() throws InterruptedException {
+		BackendFactory backendFactory = BackendFactory.instance;
+
+		atomicPartIdIndex = backendFactory
+				.<Integer, AtomicPart> createIndex();
+		atomicPartBuildDateIndex = backendFactory
+				.<Integer, LargeSet<AtomicPart>> createIndex();
+		documentTitleIndex = backendFactory
+				.<String, Document> createIndex();
+		compositePartIdIndex = backendFactory
+				.<Integer, CompositePart> createIndex();
+		baseAssemblyIdIndex = backendFactory
+				.<Integer, BaseAssembly> createIndex();
+		complexAssemblyIdIndex = backendFactory
+				.<Integer, ComplexAssembly> createIndex();
+
+		compositePartBuilder = new CompositePartBuilder(
+				compositePartIdIndex, documentTitleIndex,
+				atomicPartIdIndex, atomicPartBuildDateIndex);
+		moduleBuilder = new ModuleBuilder(baseAssemblyIdIndex,
+				complexAssemblyIdIndex);
+
+		SetupDataStructure setupOperation = new SetupDataStructure(this);
+		OperationExecutorFactory.executeSequentialOperation(setupOperation);
+		module = setupOperation.getModule();
+	}
+
+	public Index<Integer, LargeSet<AtomicPart>> getAtomicPartBuildDateIndex() {
 		return atomicPartBuildDateIndex;
 	}
 
-	public Index<IntIndexKey, AtomicPart> getAtomicPartIdIndex() {
+	public Index<Integer, AtomicPart> getAtomicPartIdIndex() {
 		return atomicPartIdIndex;
 	}
 
-	public Index<IntIndexKey, BaseAssembly> getBaseAssemblyIdIndex() {
+	public Index<Integer, BaseAssembly> getBaseAssemblyIdIndex() {
 		return baseAssemblyIdIndex;
 	}
 
-	public Index<IntIndexKey, ComplexAssembly> getComplexAssemblyIdIndex() {
+	public Index<Integer, ComplexAssembly> getComplexAssemblyIdIndex() {
 		return complexAssemblyIdIndex;
 	}
 
-	public Index<IntIndexKey, CompositePart> getCompositePartIdIndex() {
+	public Index<Integer, CompositePart> getCompositePartIdIndex() {
 		return compositePartIdIndex;
 	}
 
-	public Index<StringIndexKey, Document> getDocumentTitleIndex() {
+	public Index<String, Document> getDocumentTitleIndex() {
 		return documentTitleIndex;
 	}
 
 	public Module getModule() {
 		return module;
 	}
-	
+
 	public CompositePartBuilder getCompositePartBuilder() {
 		return compositePartBuilder;
 	}
-	
+
 	public ModuleBuilder getModuleBuilder() {
 		return moduleBuilder;
 	}
-	
+
 	public AssemblyBuilder getAssemblyBuilder() {
 		return moduleBuilder.getAssemblyBuilder();
 	}

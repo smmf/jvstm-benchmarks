@@ -1,47 +1,35 @@
 package stmbench7.impl.backend;
 
 import java.util.ArrayList;
-import java.util.Iterator;
 
 import stmbench7.annotations.ContainedInAtomic;
+import stmbench7.backend.ImmutableCollection;
 
 /**
  * A simple implementation of a small-size set
  * (used by Assembly and AtomicPart objects).
  */
 @ContainedInAtomic
-public class SmallSetImpl<E> implements Iterable<E> {
+public class SmallSetImpl<E> extends ArrayList<E> {
 
-	private ArrayList<E> elements;
-	
+	private static final long serialVersionUID = 8608574819902616324L;
+
 	public SmallSetImpl() {
-		elements = new ArrayList<E>();
+		super();
 	}
 	
 	public SmallSetImpl(SmallSetImpl<E> source) {
-		elements = new ArrayList<E>(source.elements);
+		super(source);
 	}
 	
 	public boolean add(E element) {
-		if(elements.contains(element)) return false;
-		
-		elements.add(element);
+		if(contains(element)) return false;
+
+		super.add(element);
 		return true;
 	}
 	
-	public boolean remove(E element) {
-		return elements.remove(element);
-	}
-	
-	public boolean contains(E element) {
-		return elements.contains(element);
-	}
-	
-	public int size() {
-		return elements.size();
-	}
-	
-	public Iterator<E> iterator() {
-		return elements.iterator();
+	public ImmutableCollection<E> immutableView() {
+		return new ImmutableViewImpl<E>(this);
 	}
 }

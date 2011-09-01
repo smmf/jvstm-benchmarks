@@ -20,5 +20,5 @@ duration="30"
 
 echo $jvstm_basename: -l ${duration} -t ${nthreads} -w $load --no-traversals --no-sms
 
-${JAVA} ${JAVA_OPTS} -cp ${CLASSPATH} stmbench7.Benchmark -g $method -s stmbench7.impl.jvstm.SynchMethodInitializerJVSTM -w $load -l $duration -t ${nthreads} --no-traversals --no-sms > $OUTDIR/notrav-${load}-nosms-${nthreads}.txt 2>&1
+${JAVA} ${JAVA_OPTS} -cp ${CLASSPATH} stmbench7.Benchmark -g $method -s stmbench7.impl.jvstm.JVSTMInitializer -w $load -l $duration -t ${nthreads} --no-traversals --no-sms > $OUTDIR/notrav-${load}-nosms-${nthreads}.txt 2>&1
 

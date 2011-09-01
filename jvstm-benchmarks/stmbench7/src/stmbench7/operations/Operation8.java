@@ -9,7 +9,6 @@ import stmbench7.annotations.Transactional;
 import stmbench7.backend.Index;
 import stmbench7.core.BaseAssembly;
 import stmbench7.core.CompositePart;
-import stmbench7.core.IntIndexKey;
 import stmbench7.core.OperationFailedException;
 
 /**
@@ -18,7 +17,7 @@ import stmbench7.core.OperationFailedException;
  */
 public class Operation8 extends BaseOperation {
 	
-	protected Index<IntIndexKey,BaseAssembly> baseAssemblyIdIndex;
+	protected Index<Integer,BaseAssembly> baseAssemblyIdIndex;
 	
 	public Operation8(Setup oo7setup) {
 		this.baseAssemblyIdIndex = oo7setup.getBaseAssemblyIdIndex();
@@ -28,7 +27,7 @@ public class Operation8 extends BaseOperation {
 	@Transactional @ReadOnly
 	public int performOperation() throws OperationFailedException {
 		int baseAssemblyId = ThreadRandom.nextInt(Parameters.MaxBaseAssemblies) +1;
-		BaseAssembly baseAssembly = baseAssemblyIdIndex.get(new IntIndexKey(baseAssemblyId));
+		BaseAssembly baseAssembly = baseAssemblyIdIndex.get(baseAssemblyId);
 		if(baseAssembly == null) throw new OperationFailedException();
 		
 		int count = 0;

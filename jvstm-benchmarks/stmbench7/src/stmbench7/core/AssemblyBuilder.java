@@ -17,11 +17,11 @@ public class AssemblyBuilder extends DesignObjBuilder {
 
 	private final IdPool baseAssemblyIdPool, complexAssemblyIdPool; 
 
-	private final Index<IntIndexKey,BaseAssembly> baseAssemblyIdIndex;
-	private final Index<IntIndexKey,ComplexAssembly> complexAssemblyIdIndex;
+	private final Index<Integer,BaseAssembly> baseAssemblyIdIndex;
+	private final Index<Integer,ComplexAssembly> complexAssemblyIdIndex;
 	
-	public AssemblyBuilder(Index<IntIndexKey,BaseAssembly> baseAssemblyIdIndex,
-			Index<IntIndexKey,ComplexAssembly> complexAssemblyIdIndex) {
+	public AssemblyBuilder(Index<Integer,BaseAssembly> baseAssemblyIdIndex,
+			Index<Integer,ComplexAssembly> complexAssemblyIdIndex) {
 		this.baseAssemblyIdIndex = baseAssemblyIdIndex;
 		baseAssemblyIdPool = BackendFactory.instance.createIdPool(Parameters.MaxBaseAssemblies);
 		
@@ -29,20 +29,27 @@ public class AssemblyBuilder extends DesignObjBuilder {
 		complexAssemblyIdPool = BackendFactory.instance.createIdPool(Parameters.MaxComplexAssemblies);
 	}
 	
-	public Assembly createAndRegisterAssembly(Module module, ComplexAssembly superAssembly) throws OperationFailedException {
+	public Assembly createAndRegisterAssembly(Module module, ComplexAssembly superAssembly) 
+			throws OperationFailedException {
 		if( (superAssembly == null) || (superAssembly.getLevel() > 2) )
 			return createAndRegisterComplexAssembly(module, superAssembly);
 		
 		return createAndRegisterBaseAssembly(module, superAssembly);
 	}
 	
+	public void unregisterAndRecycleAssembly(Assembly assembly) {
+		if(assembly instanceof ComplexAssembly)
+			unregisterAndRecycleComplexAssembly((ComplexAssembly)assembly);
+		else unregisterAndRecycleBaseAssembly((BaseAssembly)assembly);
+	}
+	
 	public void unregisterAndRecycleBaseAssembly(BaseAssembly baseAssembly) {
 		int baseAssemblyId = baseAssembly.getId();
-		baseAssemblyIdIndex.remove(new IntIndexKey(baseAssemblyId));
+		baseAssemblyIdIndex.remove(baseAssemblyId);
 		
 		baseAssembly.getSuperAssembly().removeSubAssembly(baseAssembly);
 		
-		ImmutableCollection<CompositePart> componentsSet = baseAssembly.getComponents();
+		ImmutableCollection<CompositePart> componentsSet = baseAssembly.getComponents().clone();
 		for(CompositePart component : componentsSet)
 			baseAssembly.removeComponent(component);
 
@@ -59,31 +66,27 @@ public class AssemblyBuilder extends DesignObjBuilder {
 		
 		superAssembly.removeSubAssembly(complexAssembly);
 		
-		ImmutableCollection<Assembly> subAssembliesSet = complexAssembly.getSubAssemblies();
+		ImmutableCollection<Assembly> subAssembliesSet = complexAssembly.getSubAssemblies().clone();
 		for(Assembly assembly : subAssembliesSet) {
 			if(currentLevel > 2) unregisterAndRecycleComplexAssembly((ComplexAssembly)assembly);
 			else unregisterAndRecycleBaseAssembly((BaseAssembly)assembly);
 		}
 		
 		int id = complexAssembly.getId();
-		complexAssemblyIdIndex.remove(new IntIndexKey(id));
+		complexAssemblyIdIndex.remove(id);
 
 		complexAssembly.clearPointers();
 		complexAssemblyIdPool.putUnusedId(id);
 	}
 	
-	public static boolean aaa = false;
-	
 	private BaseAssembly createAndRegisterBaseAssembly(Module module, ComplexAssembly superAssembly)
 			throws OperationFailedException {
 		int date = createBuildDate(Parameters.MinAssmDate, Parameters.MaxAssmDate);
-		if(aaa) System.err.println(baseAssemblyIdPool.toString());
 		int assemblyId = baseAssemblyIdPool.getId();
 		BaseAssembly baseAssembly = 
 			designObjFactory.createBaseAssembly(assemblyId, createType(), date, module, superAssembly);
-		if(aaa) System.err.println(date + " " + assemblyId);
 		
-		baseAssemblyIdIndex.put(new IntIndexKey(assemblyId), baseAssembly);
+		baseAssemblyIdIndex.put(assemblyId, baseAssembly);
 
 		superAssembly.addSubAssembly(baseAssembly);
 
@@ -97,9 +100,19 @@ public class AssemblyBuilder extends DesignObjBuilder {
 		ComplexAssembly complexAssembly = 
 			designObjFactory.createComplexAssembly(id, createType(), date, module, superAssembly);
 
-		for(int i = 0; i < Parameters.NumAssmPerAssm; i++) createAndRegisterAssembly(module, complexAssembly);
+		try {
+			for(int i = 0; i < Parameters.NumAssmPerAssm; i++) 
+				createAndRegisterAssembly(module, complexAssembly);
+		}
+		catch(OperationFailedException e) {
+			for(Assembly subAssembly : complexAssembly.getSubAssemblies().clone())
+				unregisterAndRecycleAssembly(subAssembly);
+			complexAssemblyIdPool.putUnusedId(id);
+			complexAssembly.clearPointers();
+			throw e;
+		}
 		
-		complexAssemblyIdIndex.put(new IntIndexKey(id), complexAssembly);
+		complexAssemblyIdIndex.put(id, complexAssembly);
 		
 		if(superAssembly != null) superAssembly.addSubAssembly(complexAssembly);
 		

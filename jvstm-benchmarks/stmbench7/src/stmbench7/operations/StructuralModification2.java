@@ -8,7 +8,6 @@ import stmbench7.annotations.Transactional;
 import stmbench7.annotations.Update;
 import stmbench7.backend.Index;
 import stmbench7.core.CompositePart;
-import stmbench7.core.IntIndexKey;
 import stmbench7.core.OperationFailedException;
 
 /**
@@ -16,7 +15,7 @@ import stmbench7.core.OperationFailedException;
  */
 public class StructuralModification2 extends StructuralModification1 {
 
-	protected Index<IntIndexKey, CompositePart> compositePartIdIndex;
+	protected Index<Integer, CompositePart> compositePartIdIndex;
 	
 	public StructuralModification2(Setup oo7setup) {
 
@@ -28,7 +27,7 @@ public class StructuralModification2 extends StructuralModification1 {
 	@Transactional @Update
 	public int performOperation() throws OperationFailedException {
 		int partToRemoveId = ThreadRandom.nextInt(Parameters.MaxCompParts) + 1;
-		CompositePart partToRemove = compositePartIdIndex.get(new IntIndexKey(partToRemoveId));
+		CompositePart partToRemove = compositePartIdIndex.get(partToRemoveId);
 		if(partToRemove == null) throw new OperationFailedException();
 		
 		compositePartBuilder.unregisterAndRecycleCompositePart(partToRemove);
