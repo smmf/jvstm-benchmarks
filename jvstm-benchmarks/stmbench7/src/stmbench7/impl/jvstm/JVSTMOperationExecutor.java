@@ -61,18 +61,25 @@ public class JVSTMOperationExecutor implements OperationExecutor {
 			JVSTMStats.noteTransaction(readOnly, BenchThread.ID.get());
 
 			try{
+                                boolean opSuccess = true; // default only changes when CommitException occurs eagerly
 				Transaction.begin(readOnly);
 				tx = Transaction.current();
 				try {
 					ThreadRandom.saveState();
-					return op.performOperation();
+					int result = op.performOperation();
+                                        return result;
+                                } catch (jvstm.CommitException ce) {
+                                    opSuccess = false;
+                                    throw ce;
 				} finally {
-					wasReadOnly = !tx.isWriteTransaction();
-					Transaction.commit();
+                                    wasReadOnly = !tx.isWriteTransaction();
+                                    if (opSuccess) { // commit unless a CommitException occurred during performOperation()
+                                        Transaction.commit();
 					if (Parameters.sequentialReplayEnabled) {
 						lastLocalOperationTimestamp.set(lastLocalOperationTimestamp.get() + 1);
 						lastOperationTimestamp = tx.getNumber();
 					}
+                                    }
 				}
 			}  catch (jvstm.CommitException ce) {
 				ThreadRandom.restoreState();
