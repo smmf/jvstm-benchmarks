@@ -48,24 +48,7 @@ public class LeeThread extends Thread {
     
     public static boolean stop = false;
     boolean finished = false;
-    public boolean sampleNow = false;
-    public boolean doneSample = true;
-   // public static long totalTracks=0;
-    public static long totalLaidTracks=0;
-    public long myLaidTracks=0;
-    private static Object lock = new Object();
-    public String hardware = System.getenv("HOSTNAME");
-    protected static ThreadLocal<ThreadState> _threadState = new ThreadLocal<ThreadState>() {
-        protected synchronized ThreadState initialValue() {
-            return new ThreadState();
-        }
-    };
-    static ThreadLocal<Thread> _thread = new ThreadLocal<Thread>() {
-        protected synchronized Thread initialValue() {
-            return null;
-        }
-    };
-    
+
     LeeRouter lt;
     WorkQueue t;
     boolean done = true;
@@ -80,95 +63,22 @@ public class LeeThread extends Thread {
     
     public void run() {
         while (!finished && !stop) {
-            if(sampleNow) {
-                collectMyStatistics();
-                doneSample = true;
-                sampleNow = false;
-            }
             if(done) {
                 t = lt.getNextTrack();
                 done = false;
             }
             if(t==null) {
                 finished = true;
-//                 System.err.println("Finished");
-                collectMyStatistics();
-                collectStatistics(_threadState.get());
                 break;
             } else {
                 //System.out.println("Laying track "+t.nn);
                 lt.layNextTrack(t, tempg0, tempg1, this);
-// 		int localCounter = t.counter;
-// 		if (localCounter % 100 == 0) {
-// 		    long time = System.currentTimeMillis() - lt.initialTime;
-// 		    System.out.println("Layed " + localCounter + " tracks in "
-// 				       + time + " (" + (((double)localCounter*1000)/time) + " tracks/s)");
-// 		}
                 done = true;
-                updateStatistics();
             }
         }
 	// CommitStats.dumpToResults();
     }
     
-    
-    
-    /**
-     * Class that holds thread's actual state
-     */
-    public static class ThreadState {
-        
-        
-        private long myLaidTracks = 0;        // number of laid tracks
-        
-        /**
-         * Creates new ThreadState
-         */
-        public ThreadState() {
-        }
-        
-        /**
-         * Resets any metering information (commits/aborts, etc).
-         */
-        public void reset() {
-            myLaidTracks = 0;            // total number of transactions
-        }
-        
-        /**
-         * used for debugging
-         * @return string representation of thread state
-         */
-        public String toString() {
-            return
-                    "Thread" + hashCode() + "["+
-                    "total: " +  myLaidTracks + "," +
-                    "]";
-        }
-        
-    }
-    protected static void collectStatistics(ThreadState threadState) {
-        // collect statistics
-        synchronized (lock){
-            totalLaidTracks+=threadState.myLaidTracks;
-            threadState.reset();  // set up for next iteration
-        }
-    }
-    
-    public void updateStatistics(){
-        _threadState.get().myLaidTracks++;
-    }
-    
-    public void collectMyStatistics() {
-        myLaidTracks=_threadState.get().myLaidTracks-myLaidTracks;
-        
-        
-        
-    }
-    
-    public void resetMyStatistics() {
-        myLaidTracks=0;
-    }
-
     // STATISTICAL DATA
 
     // number of read-only transactions executed

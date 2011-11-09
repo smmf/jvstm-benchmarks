@@ -43,17 +43,6 @@ import java.util.*;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 
-import javax.xml.parsers.DocumentBuilder;
-import javax.xml.parsers.DocumentBuilderFactory;
-import javax.xml.parsers.ParserConfigurationException;
-import javax.xml.transform.OutputKeys;
-import javax.xml.transform.Transformer;
-import javax.xml.transform.TransformerConfigurationException;
-import javax.xml.transform.TransformerException;
-import javax.xml.transform.TransformerFactory;
-import javax.xml.transform.dom.DOMSource;
-import javax.xml.transform.stream.StreamResult;
-
 import jvstm.CommitException;
 import jvstm.Transaction;
 import jvstm.util.Cons;
@@ -132,8 +121,6 @@ public class LeeRouter {
     
     public static boolean DEBUG = false;
     public static boolean VIEW = false;
-    
-    private static final boolean XML_REPORT = false;
     
     
     public LeeRouter(String file, boolean test, boolean debug, boolean rel) {
@@ -450,26 +437,6 @@ public class LeeRouter {
         return (int) Math.sqrt((double) sq);
     }
     
-//	private static int ratio(int x1, int y1, int x2, int y2) {
-//		int xdiff = x2 - x1;
-//		int ydiff = y2 - y1;
-//		if (xdiff < 0)
-//			xdiff = -xdiff;
-//		if (ydiff < 0)
-//			ydiff = -ydiff;
-//		if (xdiff > ydiff) {
-//			if (ydiff == 0)
-//				return 100000;
-//			else
-//				return xdiff / ydiff;
-//		} else {
-//			if (xdiff == 0)
-//				return 100000;
-//			else
-//				return ydiff / xdiff;
-//		}
-//	}
-    
     private static int deviation(int x1, int y1, int x2, int y2) {
         int xdiff = x2 - x1;
         int ydiff = y2 - y1;
@@ -727,24 +694,6 @@ public class LeeRouter {
         
     }
     
-    public static void xmlReport(Document doc) {
-        Element root = doc.getDocumentElement();
-        Element element = doc.createElement("BenchmarkSpecific");
-        root.appendChild(element);
-        
-        Element total = doc.createElement("Tracks");
-        total.setTextContent("0");
-        element.appendChild(total);
-        
-        Element tracks = doc.createElement("Laid");
-        tracks.setTextContent("0");
-        element.appendChild(tracks);
-        
-        Element subnode = doc.createElement("Failures");
-        subnode.setTextContent("0");
-        element.appendChild(subnode);
-    }
-
     public static long initialTime;
     
     public static void main(String [] args) {
@@ -761,23 +710,9 @@ public class LeeRouter {
 //		 Set up the benchmark
         long startTime = 0;
         long currentTime = 0;
-        long lastSample = 0;
-        long maxSampleThreshold = MAX_SAMPLE_THRESHOLD;
-        boolean waitingForSample = false;
         long watchdogInterval = 1000;
         boolean exitByTimeout = false;
-        int sampleInterval = 10000;
-        
-        if (XML_REPORT) {
-            XMLHelper.initializeXMLReport(numThreads, 100, sampleInterval, "0", "leeroutercoarse","0");
-        } else {
-           // System.out.println("Benchmark: " + benchmarkClassName);
-           // System.out.println("Adapter: " + adapterClassName);
-           // System.out.println("Contention manager: " + managerClassName);
-           // System.out.println("Threads: " + numThreads);
-           // System.out.println("Mix: " + experiment + "% updates");
-        }
-        
+
         LeeThread[] thread = new LeeThread[numThreads];
 // 	view.display();
         try {
@@ -785,11 +720,11 @@ public class LeeRouter {
                 thread[i] = lr.createThread();
             startTime = System.currentTimeMillis();
 	    initialTime = startTime;
-            lastSample = startTime;
+            // lastSample = startTime;
             for (int i = 0; i < numThreads; i++)
                 thread[i].start();
             currentTime = System.currentTimeMillis();
-            exitByTimeout = monitorBenchmarkToEnd(numMillis, sampleInterval, startTime, currentTime, lastSample, maxSampleThreshold, watchdogInterval, exitByTimeout, waitingForSample, thread);
+            exitByTimeout = monitorBenchmarkToEnd(numMillis, startTime, currentTime, watchdogInterval, exitByTimeout, thread);
             
             LeeThread.stop = true; // notify threads to stop
             for (int i = 0; i < numThreads; i++) {
@@ -805,7 +740,7 @@ public class LeeRouter {
         //System.out.println("Throughput:  " + throughput);
         //System.out.println("ElapsedTime: " + elapsedTime);
 	// CommitStats.printAllStats();
-        lr.report(numThreads,startTime,exitByTimeout,XML_REPORT, thread);
+        lr.report(numThreads,startTime,exitByTimeout, thread);
  	lr.sanityCheck();
         if(VIEW) {
             lr.dispGrid(lr.grid, 0); // print the grid to screen
@@ -815,7 +750,7 @@ public class LeeRouter {
         }
     }
     
-    private static boolean monitorBenchmarkToEnd(int numMillis, int sampleInterval, long startTime, long currentTime, long lastSample, long maxSampleThreshold, long watchdogInterval, boolean exitByTimeout, boolean waitingForSample, LeeThread[] thread) throws InterruptedException {
+    private static boolean monitorBenchmarkToEnd(int numMillis, long startTime, long currentTime, long watchdogInterval, boolean exitByTimeout, LeeThread[] thread) throws InterruptedException {
         while (!exitByTimeout) {
             boolean exit = true;
             Thread.sleep(watchdogInterval);
@@ -823,8 +758,8 @@ public class LeeRouter {
             // Any threads with work left?
             for (LeeThread i : thread)
                 if (i.finished != true) {
-                exit = false;
-                break;
+                    exit = false;
+                    break;
                 }
             if (!exit)
                 currentTime = System.currentTimeMillis();
@@ -835,130 +770,45 @@ public class LeeRouter {
             if (currentTime - startTime > numMillis) {
                 exitByTimeout = true;
             }
-            
-            // Sample?
-            // Warning: watchdogInterval should remain
-            // short to prevent this figures going sloppy
-            if (currentTime - lastSample > sampleInterval && !waitingForSample) {
-                waitingForSample = true;
-                for (LeeThread t : thread) {
-                    t.resetMyStatistics();
-                    t.doneSample = false;
-                    t.sampleNow = true;
-                }
-            }
-            // Get results from all threads
-            // Note: avoiding synchronisation (costs), hence
-            // poor method of waiting for sample updates from threads
-            // and hoping they are done by the time we go to check
-            if(waitingForSample) {
-                boolean statsUpdated = true;
-                for (LeeThread t : thread) {
-                    if(!t.finished && !t.doneSample) {
-                        statsUpdated = false;
-                        break;
-                    }
-                }
-                
-                if(statsUpdated || currentTime - lastSample > maxSampleThreshold) {
-                    waitingForSample = false;
-                    lastSample = currentTime;
-                    double elapsed = (double) (lastSample - startTime) / 1000.0;
-                    obtainStats(thread, elapsed, XML_REPORT);
-                }
-            }
         }
         return exitByTimeout;
     }
     
     private static void report(int numThreads, long startTime,
-			       boolean timeout, boolean xmlreport, LeeThread [] threads) {
+			       boolean timeout, LeeThread [] threads) {
         
         long stopTime = System.currentTimeMillis();
-//         double elapsed = (double) (stopTime - startTime) / 1000.0;
         long elapsed = stopTime - startTime;
-        if (xmlreport) {
-            XMLHelper.generateXMLReportSummary(timeout, xmlreport, elapsed);
-            
-        } else {
-	    int roTransactionsSum = 0;
-	    int rwTransactionsSum = 0;
-	    int conflictsSum = 0;
-	    int restartsSum = 0;
-	    long longestTrackLayTime = 0;
-	    long shortestTrackLayTime = Long.MAX_VALUE;
-	    long totalWorkTime = 0;
 
-            for (int i = 0; i < numThreads; i++) {
-		roTransactionsSum+= threads[i].roTransactions;
-		rwTransactionsSum+= threads[i].rwTransactions;
-		conflictsSum+= threads[i].conflicts;
-		restartsSum+= threads[i].restarts;
-		if (threads[i].longestTrackLayTime > longestTrackLayTime) {
-		    longestTrackLayTime = threads[i].longestTrackLayTime;
-		}
-		if (threads[i].shortestTrackLayTime < shortestTrackLayTime) {
-		    shortestTrackLayTime = threads[i].shortestTrackLayTime;
-		}
-		totalWorkTime+= threads[i].totalWorkTime;
-	    }
+        int roTransactionsSum = 0;
+        int rwTransactionsSum = 0;
+        int conflictsSum = 0;
+        int restartsSum = 0;
+        long longestTrackLayTime = 0;
+        long shortestTrackLayTime = Long.MAX_VALUE;
+        long totalWorkTime = 0;
 
-//  	    System.err.println("Threads, Time, Tracks, Failures, ROTransactions, "
-// 			       +"RWTransactions, Conflicts, Restarts, LongestTime, "
-// 			       +"ShortestTime, TotalWorkTime");
-	    System.out.println(numThreads+", "+elapsed+", "+netNo+", "+failures+", "+roTransactionsSum+", "
-			       +rwTransactionsSum+", "+conflictsSum+", "+restartsSum+", "+longestTrackLayTime+", "
-			       +shortestTrackLayTime+", "+totalWorkTime);
-
-            //benchmark.report();
-//             System.out.println("Elapsed time: " + elapsed + " seconds.");
-//             System.out.println("----------------------------------------");
-        }
-    }
-    
-    static void obtainStats(LeeThread[] thread, double time, boolean xmlreport) {
-        //long commits = 0;
-        //long transactions = 0;
-        //long commitMemRefs = 0;
-        //long totalMemRefs = 0;
-        long laidTracks=0;
-        //long totalTracks=0;
-        String hardware = null;
-        boolean finalStats = false;
-        
-        if (thread == null) {
-            // This means we are going to exit
-            finalStats = true;
-            laidTracks=LeeThread.totalLaidTracks;
-        } else {
-            for (LeeThread t : thread) {
-                //commits += t.myCommits;
-                //transactions += t.myTransactions;
-                //commitMemRefs += t.myCommitMemRefs;
-                //totalMemRefs += t.myTotalMemRefs;
-                hardware = t.hardware;
-                laidTracks +=t.myLaidTracks;
-                if (hardware == null)
-                    hardware = "";
+        for (int i = 0; i < numThreads; i++) {
+            roTransactionsSum+= threads[i].roTransactions;
+            rwTransactionsSum+= threads[i].rwTransactions;
+            conflictsSum+= threads[i].conflicts;
+            restartsSum+= threads[i].restarts;
+            if (threads[i].longestTrackLayTime > longestTrackLayTime) {
+                longestTrackLayTime = threads[i].longestTrackLayTime;
             }
+            if (threads[i].shortestTrackLayTime < shortestTrackLayTime) {
+                shortestTrackLayTime = threads[i].shortestTrackLayTime;
+            }
+            totalWorkTime+= threads[i].totalWorkTime;
         }
-        
-	if (xmlreport) {
-            XMLHelper.generateXMLIntervalSample(time,laidTracks,0,0,0,hardware,finalStats);//generateXMLIntervalSampleCoarse(time,laidTracks, hardware, finalStats);
-        } else {
-           // System.out.println("Timestamp: " + time);
-           // if (transactions > 0) {
-               // System.out.println("Committed: " + commits);
-               // System.out.println("Total transactions: " + transactions);
-               // System.out.println("Percent committed: " + (100 * commits)
-               // / transactions);
-               // System.out.println("Commit MemRefs: " + commitMemRefs);
-          //      System.out.println("Total MemRefs " + totalMemRefs);
-          //      System.out.println("laidTracks " + laidTracks);
-           // } else {
-           //     System.out.println("No transactions executed!");
-           // }
-        }
+
+        System.out.println(numThreads+", "+elapsed+", "+netNo+", "+failures+", "+roTransactionsSum+", "
+                           +rwTransactionsSum+", "+conflictsSum+", "+restartsSum+", "+longestTrackLayTime+", "
+                           +shortestTrackLayTime+", "+totalWorkTime);
+
+        //benchmark.report();
+        //             System.out.println("Elapsed time: " + elapsed + " seconds.");
+        //             System.out.println("----------------------------------------");
     }
     
     static final int [][] getCorrectTempg(int [][]tempg0, int [][]tempg1, int z) {
