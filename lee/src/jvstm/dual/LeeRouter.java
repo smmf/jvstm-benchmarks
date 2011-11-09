@@ -607,15 +607,15 @@ public class LeeRouter {
 		    lt.rwTransactions++;
 		    backtrackFrom(xg, yg, xs, ys, netNo, tempg0, tempg1, grid); // call the backtrack method
 		    Transaction.commit();
+                    committed = true;
 		    if(DEBUG) System.out.println("Target (" + xg + ", " + yg + ")... FOUND!");
 		} // print outcome of expansion method
 		else {
-		    Transaction.commit();
+		    // Transaction.commit();
 		    if(DEBUG) System.out.println("Failed to route " + xs + " " + ys + " to " + xg
 						 + "  " + yg);
 		    failures++;
 		}
-		committed = true;
 		break;
 	    } catch (CommitException e) {
 		if (!conflictNoted) {
