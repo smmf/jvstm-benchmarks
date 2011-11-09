@@ -630,13 +630,13 @@ public class LeeRouter {
 	    boolean committed = false;
 	    try {
 		// read-only tx on expansion
-		Transaction.begin(true);
+		Transaction.begin(false);
 		lt.roTransactions++;
 		// call the expansion method to return found/not found boolean
 		found = expandFromTo(xs, ys, xg, yg, GRID_SIZE * 5, tempg0, tempg1, grid);
 
 		if (found) {
-		    Transaction.commitAndBegin(false);
+		    // Transaction.commitAndBegin(false);
 		    lt.rwTransactions++;
 		    backtrackFrom(xg, yg, xs, ys, netNo, tempg0, tempg1, grid); // call the backtrack method
 		    Transaction.commit();
