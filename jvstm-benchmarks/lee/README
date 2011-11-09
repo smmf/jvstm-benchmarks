@@ -12,11 +12,15 @@ Running Lee-TM
 --------------
 In order to execute Lee-TM, run:
 
-java -classpath build/classes:. LeeRouter <numthreads> <inputfile>
+java -classpath build LeeRouter <numthreads> <inputfile>
 
 E.g. to run LeeRouter with the standard input file mainboard.txt, and using 8 threads, run:
 
-java -classpath build/classes:. LeeRouter 8 src/mainboard.txt
+java -classpath build lee.LeeRouter 8 src/mainboard.txt
+
+Using JVSTM requires adding jvstm.jar to the classpath and using jvstm.dual.LeeRouter as the main class. Someting like:
+
+java -classpath build:lib/jvstm.jar jvstm.dual.LeeRouter 8 src/mainboard.txt
 
 
 NetBeans
