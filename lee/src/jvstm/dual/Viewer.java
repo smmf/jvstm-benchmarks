@@ -46,8 +46,8 @@ import java.awt.image.*;
 public class Viewer extends Frame {
     private BufferedImage image;
 
-    public Viewer() {
-        image = new BufferedImage(600,600,1); //TYPE_INT_RGB
+    public Viewer(int gridSize) {
+        image = new BufferedImage(gridSize,gridSize,1); //TYPE_INT_RGB
 	image.flush();
 	addWindowListener(new WindowAdapter() {
 	    public void windowClosing(WindowEvent e) {

@@ -69,11 +69,13 @@ public class LeeThread extends Thread {
     LeeRouter lt;
     WorkQueue t;
     boolean done = true;
-    int[][][] tempg;
+    int[][] tempg0;
+    int[][] tempg1;
     
     LeeThread(LeeRouter lt) {
         this.lt = lt;
-	tempg = new int[lt.GRID_SIZE][lt.GRID_SIZE][2]; // Lee 2D Grid copy
+	tempg0 = new int[lt.GRID_SIZE][lt.GRID_SIZE]; // Lee 2D Grid copy
+	tempg1 = new int[lt.GRID_SIZE][lt.GRID_SIZE]; // Lee 2D Grid copy
     }
     
     public void run() {
@@ -95,7 +97,7 @@ public class LeeThread extends Thread {
                 break;
             } else {
                 //System.out.println("Laying track "+t.nn);
-                lt.layNextTrack(t, tempg, this);
+                lt.layNextTrack(t, tempg0, tempg1, this);
 // 		int localCounter = t.counter;
 // 		if (localCounter % 100 == 0) {
 // 		    long time = System.currentTimeMillis() - lt.initialTime;
