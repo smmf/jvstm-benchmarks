@@ -47,7 +47,7 @@ import jvstm.CommitException;
 import jvstm.Transaction;
 import jvstm.util.Cons;
 // import jvstm.CommitStats;
-import jvstm.util.VMultiArray;
+// import jvstm.util.VMultiArray;
 
 public class LeeRouter {
     final static int cyan = 0x00FFFF;
@@ -239,7 +239,7 @@ public class LeeRouter {
         return null;
     }
     
-    public boolean layNextTrack(WorkQueue q, VMultiArray<Integer> tempg0, VMultiArray<Integer> tempg1, LeeThread lt) {
+    public boolean layNextTrack(WorkQueue q, TempGrid tempg0, TempGrid tempg1, LeeThread lt) {
         // start transaction
         boolean done = false;
 	long start = System.currentTimeMillis();
@@ -294,7 +294,7 @@ public class LeeRouter {
     }
     
     public boolean expandFromTo(int x, int y, int xGoal, int yGoal,
-				int num, VMultiArray<Integer>tempg0, VMultiArray<Integer> tempg1, Grid grid) {
+				int num, TempGrid tempg0, TempGrid tempg1, Grid grid) {
         // this method should use Lee's expansion algorithm from
         // coordinate (x,y) to (xGoal, yGoal) for the num iterations
         // it should return true if the goal is found and false if it is not
@@ -419,7 +419,7 @@ public class LeeRouter {
         return false;
     }
     
-    private boolean pathFromOtherSide(VMultiArray<Integer> g0, VMultiArray<Integer> g1, int X, int Y, int Z) {
+    private boolean pathFromOtherSide(TempGrid g0, TempGrid g1, int X, int Y, int Z) {
         boolean ok;
         int Zo;
         Zo = 1 - Z; // other side
@@ -452,7 +452,7 @@ public class LeeRouter {
     }
     
     public void backtrackFrom(int xGoal, int yGoal, int xStart,
-			      int yStart, int trackNo, VMultiArray<Integer> tempg0, VMultiArray<Integer> tempg1, Grid grid) {
+			      int yStart, int trackNo, TempGrid tempg0, TempGrid tempg1, Grid grid) {
         // this method should backtrack from the goal position (xGoal, yGoal)
         // back to the starting position (xStart, yStart) filling in the
         // grid array g with the specified track number trackNo ( + TRACK).
@@ -563,7 +563,7 @@ public class LeeRouter {
         if(DEBUG) System.out.println("Track " + trackNo + " completed");
     }
     
-    public boolean connect(int xs, int ys, int xg, int yg, int netNo, VMultiArray<Integer> tempg0, VMultiArray<Integer> tempg1,
+    public boolean connect(int xs, int ys, int xg, int yg, int netNo, TempGrid tempg0, TempGrid tempg1,
 			   Grid grid, LeeThread lt) {
         // calls expandFrom and backtrackFrom to create connection
         // This is the only real change needed to make the program
@@ -812,7 +812,7 @@ public class LeeRouter {
         //             System.out.println("----------------------------------------");
     }
     
-    static final VMultiArray<Integer> getCorrectTempg(VMultiArray<Integer> tempg0, VMultiArray<Integer> tempg1, int z) {
+    static final TempGrid getCorrectTempg(TempGrid tempg0, TempGrid tempg1, int z) {
 	return ((z == 0) ? tempg0 : tempg1);
     }
 
