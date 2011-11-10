@@ -39,6 +39,7 @@ import java.util.concurrent.Callable;
 import jvstm.ReadWriteTransaction;
 // import jvstm.CommitStats;
 import jvstm.util.Cons;
+import jvstm.util.VMultiArray;
 
 /**
  *
@@ -52,13 +53,13 @@ public class LeeThread extends Thread {
     LeeRouter lt;
     WorkQueue t;
     boolean done = true;
-    int[][] tempg0;
-    int[][] tempg1;
+    VMultiArray<Integer> tempg0;
+    VMultiArray<Integer> tempg1;
     
     LeeThread(LeeRouter lt) {
         this.lt = lt;
-	tempg0 = new int[lt.GRID_SIZE][lt.GRID_SIZE]; // Lee 2D Grid copy
-	tempg1 = new int[lt.GRID_SIZE][lt.GRID_SIZE]; // Lee 2D Grid copy
+        tempg0 = new VMultiArray(lt.GRID_SIZE, lt.GRID_SIZE); // Lee 2D Grid copy
+        tempg1 = new VMultiArray(lt.GRID_SIZE, lt.GRID_SIZE); // Lee 2D Grid copy
     }
     
     public void run() {

@@ -47,6 +47,7 @@ import jvstm.CommitException;
 import jvstm.Transaction;
 import jvstm.util.Cons;
 // import jvstm.CommitStats;
+import jvstm.util.VMultiArray;
 
 public class LeeRouter {
     final static int cyan = 0x00FFFF;
@@ -238,7 +239,7 @@ public class LeeRouter {
         return null;
     }
     
-    public boolean layNextTrack(WorkQueue q, int [][]tempg0, int [][]tempg1, LeeThread lt) {
+    public boolean layNextTrack(WorkQueue q, VMultiArray<Integer> tempg0, VMultiArray<Integer> tempg1, LeeThread lt) {
         // start transaction
         boolean done = false;
 	long start = System.currentTimeMillis();
@@ -293,7 +294,7 @@ public class LeeRouter {
     }
     
     public boolean expandFromTo(int x, int y, int xGoal, int yGoal,
-				int num, int [][]tempg0, int [][]tempg1, Grid grid) {
+				int num, VMultiArray<Integer>tempg0, VMultiArray<Integer> tempg1, Grid grid) {
         // this method should use Lee's expansion algorithm from
         // coordinate (x,y) to (xGoal, yGoal) for the num iterations
         // it should return true if the goal is found and false if it is not
@@ -303,8 +304,8 @@ public class LeeRouter {
         // g[xGoal][yGoal][1] = EMPTY; // set goal as empty
         Vector<Frontier> front = new Vector<Frontier>();
         Vector<Frontier> tmp_front = new Vector<Frontier>();
-        tempg0[x][y] = 1; // set grid (x,y) as 1
-        tempg1[x][y] = 1; // set grid (x,y) as 1
+        tempg0.put(1, x, y); // set grid (x,y) as 1
+        tempg1.put(1, x, y); // set grid (x,y) as 1
         boolean trace1 = false;
         front.addElement(new Frontier(x, y, 0, 0));
         front.addElement(new Frontier(x, y, 1, 0)); // we can start from either
@@ -326,55 +327,55 @@ public class LeeRouter {
                         if(DEBUG)
                             System.out.println("X " + f.x + " Y " + f.y + " Z "
                                     + f.z + " DW " + f.dw + " processing - val "
-                                    + getCorrectTempg(tempg0, tempg1, f.z)[f.x][f.y]);
+                                    + getCorrectTempg(tempg0, tempg1, f.z).get(f.x, f.y));
 //					int dir_weight = 1;
                     weight = grid.getPoint(f.x,f.y + 1,f.z) + 1;
-                    prev_val = getCorrectTempg(tempg0, tempg1, f.z)[f.x][f.y + 1];
+                    prev_val = getCorrectTempg(tempg0, tempg1, f.z).get(f.x, f.y + 1);
                     boolean reached = (f.x == xGoal) && (f.y + 1 == yGoal);
-                    if ((prev_val > getCorrectTempg(tempg0, tempg1, f.z)[f.x][f.y] + weight)
+                    if ((prev_val > getCorrectTempg(tempg0, tempg1, f.z).get(f.x, f.y) + weight)
                     && (weight < OCC) || reached) {
                         if (ok(f.x, f.y + 1)) {
-                            getCorrectTempg(tempg0, tempg1, f.z)[f.x][f.y + 1] = getCorrectTempg(tempg0, tempg1, f.z)[f.x][f.y]
-                                    + weight; // looking north
+                            getCorrectTempg(tempg0, tempg1, f.z).put(getCorrectTempg(tempg0, tempg1, f.z).get(f.x, f.y) + weight,
+                                                                     f.x, f.y + 1); // looking north
                             if (!reached)
                                 tmp_front.addElement(new Frontier(f.x, f.y + 1,
                                         f.z, 0));
                         }
                     }
                     weight = grid.getPoint(f.x + 1,f.y,f.z) + 1;
-                    prev_val = getCorrectTempg(tempg0, tempg1, f.z)[f.x + 1][f.y];
+                    prev_val = getCorrectTempg(tempg0, tempg1, f.z).get(f.x + 1, f.y);
                     reached = (f.x + 1 == xGoal) && (f.y == yGoal);
-                    if ((prev_val > getCorrectTempg(tempg0, tempg1, f.z)[f.x][f.y] + weight)
+                    if ((prev_val > getCorrectTempg(tempg0, tempg1, f.z).get(f.x, f.y) + weight)
                     && (weight < OCC) || reached) {
                         if (ok(f.x + 1, f.y)) {
-                            getCorrectTempg(tempg0, tempg1, f.z)[f.x + 1][f.y] = getCorrectTempg(tempg0, tempg1, f.z)[f.x][f.y]
-                                    + weight; // looking east
+                            getCorrectTempg(tempg0, tempg1, f.z).put(getCorrectTempg(tempg0, tempg1, f.z).get(f.x, f.y) + weight,
+                                                                     f.x + 1, f.y); // looking east
                             if (!reached)
                                 tmp_front.addElement(new Frontier(f.x + 1, f.y,
                                         f.z, 0));
                         }
                     }
                     weight = grid.getPoint(f.x,f.y - 1,f.z) + 1;
-                    prev_val = getCorrectTempg(tempg0, tempg1, f.z)[f.x][f.y - 1];
+                    prev_val = getCorrectTempg(tempg0, tempg1, f.z).get(f.x, f.y - 1);
                     reached = (f.x == xGoal) && (f.y - 1 == yGoal);
-                    if ((prev_val > getCorrectTempg(tempg0, tempg1, f.z)[f.x][f.y] + weight)
+                    if ((prev_val > getCorrectTempg(tempg0, tempg1, f.z).get(f.x, f.y) + weight)
                     && (weight < OCC) || reached) {
                         if (ok(f.x, f.y - 1)) {
-                            getCorrectTempg(tempg0, tempg1, f.z)[f.x][f.y - 1] = getCorrectTempg(tempg0, tempg1, f.z)[f.x][f.y]
-                                    + weight; // looking south
+                            getCorrectTempg(tempg0, tempg1, f.z).put(getCorrectTempg(tempg0, tempg1, f.z).get(f.x, f.y) + weight,
+                                                                     f.x, f.y - 1); // looking south
                             if (!reached)
                                 tmp_front.addElement(new Frontier(f.x, f.y - 1,
                                         f.z, 0));
                         }
                     }
                     weight = grid.getPoint(f.x - 1,f.y,f.z) + 1;
-                    prev_val = getCorrectTempg(tempg0, tempg1, f.z)[f.x - 1][f.y];
+                    prev_val = getCorrectTempg(tempg0, tempg1, f.z).get(f.x - 1, f.y);
                     reached = (f.x - 1 == xGoal) && (f.y == yGoal);
-                    if ((prev_val > getCorrectTempg(tempg0, tempg1, f.z)[f.x][f.y] + weight)
+                    if ((prev_val > getCorrectTempg(tempg0, tempg1, f.z).get(f.x, f.y) + weight)
                     && (weight < OCC) || reached) {
                         if (ok(f.x - 1, f.y)) {
-                            getCorrectTempg(tempg0, tempg1, f.z)[f.x - 1][f.y] = getCorrectTempg(tempg0, tempg1, f.z)[f.x][f.y]
-                                    + weight; // looking west
+                            getCorrectTempg(tempg0, tempg1, f.z).put(getCorrectTempg(tempg0, tempg1, f.z).get(f.x, f.y) + weight,
+                                                                     f.x - 1, f.y); // looking west
                             if (!reached)
                                 tmp_front.addElement(new Frontier(f.x - 1, f.y,
                                         f.z, 0));
@@ -382,22 +383,22 @@ public class LeeRouter {
                     }
                     if (f.z == 0) {
                         weight = grid.getPoint(f.x,f.y,1) + 1;
-                        if ((getCorrectTempg(tempg0, tempg1, 1)[f.x][f.y] > getCorrectTempg(tempg0, tempg1, 0)[f.x][f.y])
+                        if ((getCorrectTempg(tempg0, tempg1, 1).get(f.x, f.y) > getCorrectTempg(tempg0, tempg1, 0).get(f.x, f.y))
                         && (weight < OCC)) {
-                            getCorrectTempg(tempg0, tempg1, 1)[f.x][f.y] = getCorrectTempg(tempg0, tempg1, 0)[f.x][f.y];
+                            getCorrectTempg(tempg0, tempg1, 1).put(getCorrectTempg(tempg0, tempg1, 0).get(f.x, f.y), f.x, f.y);
                             tmp_front.addElement(new Frontier(f.x, f.y, 1, 0));
                         }
                     } else {
                         weight = grid.getPoint(f.x,f.y,0) + 1;
-                        if ((getCorrectTempg(tempg0, tempg1, 0)[f.x][f.y] > getCorrectTempg(tempg0, tempg1, 1)[f.x][f.y])
+                        if ((getCorrectTempg(tempg0, tempg1, 0).get(f.x, f.y) > getCorrectTempg(tempg0, tempg1, 1).get(f.x, f.y))
                         && (weight < OCC)) {
-                            getCorrectTempg(tempg0, tempg1, 0)[f.x][f.y] = getCorrectTempg(tempg0, tempg1, 1)[f.x][f.y];
+                            getCorrectTempg(tempg0, tempg1, 0).put(getCorrectTempg(tempg0, tempg1, 1).get(f.x, f.y), f.x, f.y);
                             tmp_front.addElement(new Frontier(f.x, f.y, 0, 0));
                         }
                     }
                     // must check if found goal, if so return TRUE
-                    reached0 = getCorrectTempg(tempg0, tempg1, 0)[xGoal][yGoal] != TEMP_EMPTY;
-                    reached1 = getCorrectTempg(tempg0, tempg1, 1)[xGoal][yGoal] != TEMP_EMPTY;
+                    reached0 = getCorrectTempg(tempg0, tempg1, 0).get(xGoal, yGoal) != TEMP_EMPTY;
+                    reached1 = getCorrectTempg(tempg0, tempg1, 1).get(xGoal, yGoal) != TEMP_EMPTY;
                     if ((reached0 && !reached1) || (!reached0 && reached1))
                         extra_iterations = 100;
                     if ((extra_iterations == 0) && (reached0 || reached1)
@@ -418,17 +419,17 @@ public class LeeRouter {
         return false;
     }
     
-    private boolean pathFromOtherSide(int[][] g0, int [][] g1, int X, int Y, int Z) {
+    private boolean pathFromOtherSide(VMultiArray<Integer> g0, VMultiArray<Integer> g1, int X, int Y, int Z) {
         boolean ok;
         int Zo;
         Zo = 1 - Z; // other side
-        int sqval = getCorrectTempg(g0, g1, Zo)[X][Y];
+        int sqval = getCorrectTempg(g0, g1, Zo).get(X, Y);
         if ((sqval == VIA) || (sqval == BVIA))
             return false;
-        ok = (getCorrectTempg(g0, g1, Zo)[X][Y] <= getCorrectTempg(g0, g1, Z)[X][Y]);
+        ok = (getCorrectTempg(g0, g1, Zo).get(X, Y) <= getCorrectTempg(g0, g1, Z).get(X, Y));
         if (ok)
-            ok = (getCorrectTempg(g0, g1, Zo)[X - 1][Y] < sqval) || (getCorrectTempg(g0, g1, Zo)[X + 1][Y] < sqval)
-            || (getCorrectTempg(g0, g1, Zo)[X][Y - 1] < sqval) || (getCorrectTempg(g0, g1, Zo)[X][Y + 1] < sqval);
+            ok = (getCorrectTempg(g0, g1, Zo).get(X - 1, Y) < sqval) || (getCorrectTempg(g0, g1, Zo).get(X + 1, Y) < sqval)
+            || (getCorrectTempg(g0, g1, Zo).get(X, Y - 1) < sqval) || (getCorrectTempg(g0, g1, Zo).get(X, Y + 1) < sqval);
         return ok;
     }
     
@@ -451,7 +452,7 @@ public class LeeRouter {
     }
     
     public void backtrackFrom(int xGoal, int yGoal, int xStart,
-			      int yStart, int trackNo, int[][] tempg0, int [][]tempg1, Grid grid) {
+			      int yStart, int trackNo, VMultiArray<Integer> tempg0, VMultiArray<Integer> tempg1, Grid grid) {
         // this method should backtrack from the goal position (xGoal, yGoal)
         // back to the starting position (xStart, yStart) filling in the
         // grid array g with the specified track number trackNo ( + TRACK).
@@ -475,7 +476,7 @@ public class LeeRouter {
             zGoal = 0;
         else
             zGoal = 1;
-        if (getCorrectTempg(tempg0, tempg1, zGoal)[xGoal][yGoal] == TEMP_EMPTY) {
+        if (getCorrectTempg(tempg0, tempg1, zGoal).get(xGoal, yGoal) == TEMP_EMPTY) {
             if(DEBUG) System.out.println("Preferred Layer not reached " + zGoal);
             zGoal = 1 - zGoal;
         }
@@ -493,10 +494,10 @@ public class LeeRouter {
             int d;  // aux direction
             for (d = 0; d < 4; d++) { // PDL: Find dir to start back from
                 // current position
-                if ((getCorrectTempg(tempg0, tempg1, tempZ)[tempX + dx[tempZ][d]][tempY + dy[tempZ][d]] < getCorrectTempg(tempg0, tempg1, tempZ)[tempX][tempY])
-		    && (getCorrectTempg(tempg0, tempg1, tempZ)[tempX + dx[tempZ][d]][tempY + dy[tempZ][d]] != TEMP_EMPTY)) {
-                    if (getCorrectTempg(tempg0, tempg1, tempZ)[tempX + dx[tempZ][d]][tempY + dy[tempZ][d]] < min_square) {
-                        min_square = getCorrectTempg(tempg0, tempg1, tempZ)[tempX + dx[tempZ][d]][tempY + dy[tempZ][d]];
+                if ((getCorrectTempg(tempg0, tempg1, tempZ).get(tempX + dx[tempZ][d], tempY + dy[tempZ][d]) < getCorrectTempg(tempg0, tempg1, tempZ).get(tempX, tempY))
+		    && (getCorrectTempg(tempg0, tempg1, tempZ).get(tempX + dx[tempZ][d], tempY + dy[tempZ][d]) != TEMP_EMPTY)) {
+                    if (getCorrectTempg(tempg0, tempg1, tempZ).get(tempX + dx[tempZ][d], tempY + dy[tempZ][d]) < min_square) {
+                        min_square = getCorrectTempg(tempg0, tempg1, tempZ).get(tempX + dx[tempZ][d], tempY + dy[tempZ][d]);
                         mind = d;
                         dir = dx[tempZ][d] * 2 + dy[tempZ][d]; // hashed dir
                         if (lastdir < -2)
@@ -509,7 +510,7 @@ public class LeeRouter {
                 distsofar++;
             if(DEBUG)
                 System.out.println("Backtracking "+tempX+" "+tempY+" "+tempZ+
-                        " "+getCorrectTempg(tempg0, tempg1, tempZ)[tempX][tempY]+" "+advanced+" "+mind);
+                        " "+getCorrectTempg(tempg0, tempg1, tempZ).get(tempX, tempY)+" "+advanced+" "+mind);
 	    int tXYZ = grid.getPoint(tempX,tempY,tempZ);
             if (pathFromOtherSide(tempg0, tempg1, tempX, tempY, tempZ)
             && ((mind > 1)
@@ -526,12 +527,12 @@ public class LeeRouter {
                 else
                     viat = BVIA; // BVIA is nowhere else to go
                 // mark via
-                getCorrectTempg(tempg0, tempg1, tempZ)[tempX][tempY] = viat;
+                getCorrectTempg(tempg0, tempg1, tempZ).put(viat, tempX, tempY);
                 grid.setPoint(tempX,tempY,tempZ,viat);
                 if(DEBUG)grid.setDebugPoint(tempX,tempY,tempZ,trackNo);
                 tempZ = tZ;
                 // and the other side
-                getCorrectTempg(tempg0, tempg1, tempZ)[tempX][tempY] = viat;
+                getCorrectTempg(tempg0, tempg1, tempZ).put(viat, tempX, tempY);
                 grid.setPoint(tempX,tempY,tempZ,viat);
                 if(DEBUG)grid.setDebugPoint(tempX,tempY,tempZ,trackNo);
                 num_vias++;
@@ -562,7 +563,7 @@ public class LeeRouter {
         if(DEBUG) System.out.println("Track " + trackNo + " completed");
     }
     
-    public boolean connect(int xs, int ys, int xg, int yg, int netNo, int[][] tempg0, int [][] tempg1,
+    public boolean connect(int xs, int ys, int xg, int yg, int netNo, VMultiArray<Integer> tempg0, VMultiArray<Integer> tempg1,
 			   Grid grid, LeeThread lt) {
         // calls expandFrom and backtrackFrom to create connection
         // This is the only real change needed to make the program
@@ -589,7 +590,7 @@ public class LeeRouter {
 	    for (int x = 0; x < GRID_SIZE; x++) {
 		for (int y = 0; y < GRID_SIZE; y++) {
 		    for (int z = 0; z < 2; z++)
-			getCorrectTempg(tempg0, tempg1, z)[x][y] = TEMP_EMPTY;
+			getCorrectTempg(tempg0, tempg1, z).put(TEMP_EMPTY, x, y);
 		}
 	    }
 
@@ -811,7 +812,7 @@ public class LeeRouter {
         //             System.out.println("----------------------------------------");
     }
     
-    static final int [][] getCorrectTempg(int [][]tempg0, int [][]tempg1, int z) {
+    static final VMultiArray<Integer> getCorrectTempg(VMultiArray<Integer> tempg0, VMultiArray<Integer> tempg1, int z) {
 	return ((z == 0) ? tempg0 : tempg1);
     }
 
