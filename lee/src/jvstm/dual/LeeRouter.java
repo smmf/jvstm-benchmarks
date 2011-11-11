@@ -239,11 +239,11 @@ public class LeeRouter {
         return null;
     }
     
-    public boolean layNextTrack(WorkQueue q, TempGrid tempg0, TempGrid tempg1, LeeThread lt) {
+    public boolean layNextTrack(WorkQueue q, LeeThread lt) {
         // start transaction
         boolean done = false;
 	long start = System.currentTimeMillis();
-	done = connect(q.x1, q.y1, q.x2, q.y2, q.nn, tempg0, tempg1, grid, lt);
+	done = connect(q.x1, q.y1, q.x2, q.y2, q.nn, grid, lt);
 	long duration = System.currentTimeMillis() - start;
 	lt.totalWorkTime+= duration;
 	if (duration > lt.longestTrackLayTime) {
@@ -563,8 +563,7 @@ public class LeeRouter {
         if(DEBUG) System.out.println("Track " + trackNo + " completed");
     }
     
-    public boolean connect(int xs, int ys, int xg, int yg, int netNo, TempGrid tempg0, TempGrid tempg1,
-			   Grid grid, LeeThread lt) {
+    public boolean connect(int xs, int ys, int xg, int yg, int netNo, Grid grid, LeeThread lt) {
         // calls expandFrom and backtrackFrom to create connection
         // This is the only real change needed to make the program
         // transactional.
@@ -587,12 +586,8 @@ public class LeeRouter {
 	boolean found;
 	boolean conflictNoted = false;
 	while (true) {
-	    for (int x = 0; x < GRID_SIZE; x++) {
-		for (int y = 0; y < GRID_SIZE; y++) {
-		    for (int z = 0; z < 2; z++)
-			getCorrectTempg(tempg0, tempg1, z).put(TEMP_EMPTY, x, y);
-		}
-	    }
+            TempGrid tempg0 = new TempGrid(GRID_SIZE, GRID_SIZE);
+            TempGrid tempg1 = new TempGrid(GRID_SIZE, GRID_SIZE);
 
 	    found = false;
 	    boolean committed = false;
@@ -602,7 +597,6 @@ public class LeeRouter {
 		lt.roTransactions++;
 		// call the expansion method to return found/not found boolean
 		found = expandFromTo(xs, ys, xg, yg, GRID_SIZE * 5, tempg0, tempg1, grid);
-
 		if (found) {
 		    // Transaction.commitAndBegin(false);
 		    lt.rwTransactions++;

@@ -50,22 +50,18 @@ public class LeeThread extends Thread {
     public static boolean stop = false;
     boolean finished = false;
 
-    LeeRouter lt;
+    LeeRouter lr;
     WorkQueue t;
     boolean done = true;
-    TempGrid tempg0;
-    TempGrid tempg1;
     
-    LeeThread(LeeRouter lt) {
-        this.lt = lt;
-        tempg0 = new TempGrid(lt.GRID_SIZE, lt.GRID_SIZE);  // Lee 2D Grid copy
-        tempg1 = new TempGrid(lt.GRID_SIZE, lt.GRID_SIZE);  // Lee 2D Grid copy
+    LeeThread(LeeRouter lr) {
+        this.lr = lr;
     }
     
     public void run() {
         while (!finished && !stop) {
             if(done) {
-                t = lt.getNextTrack();
+                t = lr.getNextTrack();
                 done = false;
             }
             if(t==null) {
@@ -73,7 +69,7 @@ public class LeeThread extends Thread {
                 break;
             } else {
                 //System.out.println("Laying track "+t.nn);
-                lt.layNextTrack(t, tempg0, tempg1, this);
+                lr.layNextTrack(t, this);
                 done = true;
             }
         }
