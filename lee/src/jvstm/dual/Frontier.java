@@ -36,12 +36,11 @@ package jvstm.dual;
 
 public class Frontier {
 
-	public int x, y, z, dw;
+	public int x, y, z;
 
-	Frontier(int xx, int yy, int zz, int ddw) {
+	Frontier(int xx, int yy, int zz) {
 		x = xx;
 		y = yy;
 		z = zz;
-		dw = ddw;
 	}
 }

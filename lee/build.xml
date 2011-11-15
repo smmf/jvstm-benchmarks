@@ -16,10 +16,10 @@
     <target name="compile" depends="init" description="Compiles the source code" >
     	
 
-        <javac srcdir="${src.dir}" destdir="${build.dir}">
+        <javac srcdir="${src.dir}" destdir="${build.dir}" debug="true">
         	<classpath>
         		<pathelement path="${classpath}"/>
-        	    <pathelement location="lib/jvstm.jar"/>
+                        <pathelement location="lib/jvstm.jar"/>
         	</classpath>
         	</javac>
     </target>

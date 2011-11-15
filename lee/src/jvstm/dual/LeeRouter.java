@@ -39,6 +39,11 @@ package jvstm.dual;
 //Author: IW
 import java.io.*;
 import java.util.*;
+// import java.util.concurrent.Callable;
+import java.util.concurrent.Future;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Executors;
 
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
@@ -46,6 +51,7 @@ import org.w3c.dom.Element;
 import jvstm.CommitException;
 import jvstm.Transaction;
 import jvstm.util.Cons;
+import jvstm.util.NestedWorkUnit;
 // import jvstm.CommitStats;
 // import jvstm.util.VMultiArray;
 
@@ -293,6 +299,17 @@ public class LeeRouter {
         return (x > 0 && x < GRID_SIZE - 1 && y > 0 && y < GRID_SIZE - 1);
     }
     
+    // number of points to group in a block. The more, the larger the size of the nested
+    // transaction, because all points within a block are expanded within the same nested
+    // transaction.  The downside is that a large BLOCK_SIZE reduces parallellism.
+    static final int BLOCK_SIZE = 10; //10;
+    // minimum number of blocks required to start parallelizing
+    static final int MIN_BLOCKS = 5; //4;
+    static final int MIN_FRONT_SIZE = BLOCK_SIZE * MIN_BLOCKS;
+    // how many contiguous blocks to skip when launching parallel tasks.  For each STRIDE, blocks
+    // are expanded concurrently, So, if STRIDE is greater than the total number of blocks, blocks
+    // are executed in sequence.
+    static final int STRIDE = 4; //2;
     public boolean expandFromTo(int x, int y, int xGoal, int yGoal,
 				int num, TempGrid tempg0, TempGrid tempg1, Grid grid) {
         // this method should use Lee's expansion algorithm from
@@ -303,122 +320,212 @@ public class LeeRouter {
         // g[xGoal][yGoal][0] = EMPTY; // set goal as empty
         // g[xGoal][yGoal][1] = EMPTY; // set goal as empty
         Vector<Frontier> front = new Vector<Frontier>();
-        Vector<Frontier> tmp_front = new Vector<Frontier>();
+        Vector<Frontier> tmp_front = null; // = new Vector<Frontier>();
         tempg0.put(1, x, y); // set grid (x,y) as 1
         tempg1.put(1, x, y); // set grid (x,y) as 1
-        boolean trace1 = false;
-        front.addElement(new Frontier(x, y, 0, 0));
-        front.addElement(new Frontier(x, y, 1, 0)); // we can start from either
+
+        front.addElement(new Frontier(x, y, 0));
+        front.addElement(new Frontier(x, y, 1)); // we can start from either
         // side
         if(DEBUG) System.out.println("Expanding " + x + " " + y + " " + xGoal + " "
                 + yGoal);
-        int extra_iterations = 50;
-        boolean reached0 = false;
-        boolean reached1 = false;
+
+        boolean reached = false;
         while (!front.isEmpty()) {
-            while (!front.isEmpty()) {
-                int weight, prev_val;
-                Frontier f = (Frontier) front.elementAt(0);
-                front.removeElementAt(0);
-                if (f.dw > 0) {
-                    tmp_front.addElement(new Frontier(f.x, f.y, f.z, f.dw - 1));
+            // tmp_front is used to merge the results
+            tmp_front = new Vector();
+
+            int frontSize = front.size();
+            // System.out.println("\nExpand: " + frontSize);
+
+            // don't parallelize under a minimum threshold
+            if (frontSize >= MIN_FRONT_SIZE) {
+                int nFullBlocks = frontSize / BLOCK_SIZE;
+                int sizePartialBlock = frontSize % BLOCK_SIZE;
+                Future<ExpansionResult>[] results = new Future[nFullBlocks + (sizePartialBlock == 0 ? 0 : 1)];
+
+                for (int stride = 0; stride < STRIDE && stride < results.length && !reached; stride++) {
+                    // parallelize within each stride
+                    for (int block = stride; block < results.length; block += STRIDE) {
+                        int minPos = BLOCK_SIZE * block;
+                        // last block may be smaller
+                        int maxPos = (block == results.length - 1) ? frontSize : BLOCK_SIZE * (block + 1);
+
+                        // System.out.print("[" + block + "");
+                        results[block] = threadPool.submit(new ExpansionTask(front, minPos, maxPos, tempg0, tempg1,
+                                                                             xGoal, yGoal, this));
+
+                    }
+                    // join nested transactions.  This ensures that the nested txs in next stride will see the commits
+                    // System.out.print(";");
+                    // merge results in tmp_front
+                    try {
+                        int block = stride;
+                        for (; block < results.length; block += STRIDE) {
+                            // System.out.println("going to get() block " + block);
+                            // System.out.print("" + block + "]");
+                            ExpansionResult result = results[block].get(/*10, java.util.concurrent.TimeUnit.MILLISECONDS*/);
+                            if (result.reached) {
+                                // System.out.println("got goal on block " + block);
+                                reached = true;
+                                break;
+                            }
+                            // the goal was not reached. Add this expansion result to the new nodes to expand
+                            tmp_front.addAll(result.places);
+                        }
+                        // smf: in this case, do I need to wait for others to finish?  This only happens
+                        // when the previous cycle 'breaks', because some expansion reached the goal
+                        // System.out.println("Waiting for others...");
+                        for (int i = block + STRIDE; i < results.length; i += STRIDE) {
+                            // System.out.print(" -" + i + "-");
+                            results[i].get();
+                        }
+                        if (reached) return true;
+                        // System.out.print("|");
+                    // } catch (java.util.concurrent.TimeoutException te) {
+                    //     System.out.println("timeout");
+                    //     System.exit(-1);
+                    } catch (InterruptedException ie) {
+                        System.out.println("InterruptedException");
+                        ie.printStackTrace();
+                        System.exit(1);
+                    } catch (ExecutionException ee) {
+                        // System.out.println("ExecutionException");
+                        // ee.printStackTrace();
+                        throw (RuntimeException)ee.getCause();
+                    }
+                }
+            } else {
+                // System.out.println("Single: [0; " + frontSize + "[");
+                ExpansionResult result = expand(front, 0, frontSize, tempg0, tempg1, xGoal, yGoal);
+                if (result.reached) {
+                    return true;
+                    // reached = true;
                 } else {
-                    if (trace1)
-                        if(DEBUG)
-                            System.out.println("X " + f.x + " Y " + f.y + " Z "
-                                    + f.z + " DW " + f.dw + " processing - val "
-                                    + getCorrectTempg(tempg0, tempg1, f.z).get(f.x, f.y));
-//					int dir_weight = 1;
-                    weight = grid.getPoint(f.x,f.y + 1,f.z) + 1;
-                    prev_val = getCorrectTempg(tempg0, tempg1, f.z).get(f.x, f.y + 1);
-                    boolean reached = (f.x == xGoal) && (f.y + 1 == yGoal);
-                    if ((prev_val > getCorrectTempg(tempg0, tempg1, f.z).get(f.x, f.y) + weight)
-                    && (weight < OCC) || reached) {
-                        if (ok(f.x, f.y + 1)) {
-                            getCorrectTempg(tempg0, tempg1, f.z).put(getCorrectTempg(tempg0, tempg1, f.z).get(f.x, f.y) + weight,
-                                                                     f.x, f.y + 1); // looking north
-                            if (!reached)
-                                tmp_front.addElement(new Frontier(f.x, f.y + 1,
-                                        f.z, 0));
-                        }
-                    }
-                    weight = grid.getPoint(f.x + 1,f.y,f.z) + 1;
-                    prev_val = getCorrectTempg(tempg0, tempg1, f.z).get(f.x + 1, f.y);
-                    reached = (f.x + 1 == xGoal) && (f.y == yGoal);
-                    if ((prev_val > getCorrectTempg(tempg0, tempg1, f.z).get(f.x, f.y) + weight)
-                    && (weight < OCC) || reached) {
-                        if (ok(f.x + 1, f.y)) {
-                            getCorrectTempg(tempg0, tempg1, f.z).put(getCorrectTempg(tempg0, tempg1, f.z).get(f.x, f.y) + weight,
-                                                                     f.x + 1, f.y); // looking east
-                            if (!reached)
-                                tmp_front.addElement(new Frontier(f.x + 1, f.y,
-                                        f.z, 0));
-                        }
-                    }
-                    weight = grid.getPoint(f.x,f.y - 1,f.z) + 1;
-                    prev_val = getCorrectTempg(tempg0, tempg1, f.z).get(f.x, f.y - 1);
-                    reached = (f.x == xGoal) && (f.y - 1 == yGoal);
-                    if ((prev_val > getCorrectTempg(tempg0, tempg1, f.z).get(f.x, f.y) + weight)
-                    && (weight < OCC) || reached) {
-                        if (ok(f.x, f.y - 1)) {
-                            getCorrectTempg(tempg0, tempg1, f.z).put(getCorrectTempg(tempg0, tempg1, f.z).get(f.x, f.y) + weight,
-                                                                     f.x, f.y - 1); // looking south
-                            if (!reached)
-                                tmp_front.addElement(new Frontier(f.x, f.y - 1,
-                                        f.z, 0));
-                        }
-                    }
-                    weight = grid.getPoint(f.x - 1,f.y,f.z) + 1;
-                    prev_val = getCorrectTempg(tempg0, tempg1, f.z).get(f.x - 1, f.y);
-                    reached = (f.x - 1 == xGoal) && (f.y == yGoal);
-                    if ((prev_val > getCorrectTempg(tempg0, tempg1, f.z).get(f.x, f.y) + weight)
-                    && (weight < OCC) || reached) {
-                        if (ok(f.x - 1, f.y)) {
-                            getCorrectTempg(tempg0, tempg1, f.z).put(getCorrectTempg(tempg0, tempg1, f.z).get(f.x, f.y) + weight,
-                                                                     f.x - 1, f.y); // looking west
-                            if (!reached)
-                                tmp_front.addElement(new Frontier(f.x - 1, f.y,
-                                        f.z, 0));
-                        }
-                    }
-                    if (f.z == 0) {
-                        weight = grid.getPoint(f.x,f.y,1) + 1;
-                        if ((getCorrectTempg(tempg0, tempg1, 1).get(f.x, f.y) > getCorrectTempg(tempg0, tempg1, 0).get(f.x, f.y))
-                        && (weight < OCC)) {
-                            getCorrectTempg(tempg0, tempg1, 1).put(getCorrectTempg(tempg0, tempg1, 0).get(f.x, f.y), f.x, f.y);
-                            tmp_front.addElement(new Frontier(f.x, f.y, 1, 0));
-                        }
-                    } else {
-                        weight = grid.getPoint(f.x,f.y,0) + 1;
-                        if ((getCorrectTempg(tempg0, tempg1, 0).get(f.x, f.y) > getCorrectTempg(tempg0, tempg1, 1).get(f.x, f.y))
-                        && (weight < OCC)) {
-                            getCorrectTempg(tempg0, tempg1, 0).put(getCorrectTempg(tempg0, tempg1, 1).get(f.x, f.y), f.x, f.y);
-                            tmp_front.addElement(new Frontier(f.x, f.y, 0, 0));
-                        }
-                    }
-                    // must check if found goal, if so return TRUE
-                    reached0 = getCorrectTempg(tempg0, tempg1, 0).get(xGoal, yGoal) != TEMP_EMPTY;
-                    reached1 = getCorrectTempg(tempg0, tempg1, 1).get(xGoal, yGoal) != TEMP_EMPTY;
-                    if ((reached0 && !reached1) || (!reached0 && reached1))
-                        extra_iterations = 100;
-                    if ((extra_iterations == 0) && (reached0 || reached1)
-                    || (reached0 && reached1)) {
-                        return true; // if (xGoal, yGoal) can be found in
-                        // time
-                    } else
-                        extra_iterations--;
+                    tmp_front = new Vector(result.places.size());
+                    tmp_front.addAll(result.places);
                 }
             }
-            Vector<Frontier> tf;
-            tf = front;
+            
+            // // bail out if a path was found
+            // if (reached) {
+            //     return true;
+            // }
+
+            // otherwise reset front to be tmp_front and continue searching
             front = tmp_front;
-            tmp_front = tf;
         }
 //		 view.pad(x,y,red);
 //		 view.pad(xGoal,yGoal,red);
         return false;
     }
     
+    // perform actual expansion of points in 'front' between [min;max[.  'front' is shared so cannot
+    // be changed
+    //
+    // return a new vector with vector[0] = found? and the remaining positions containing
+    private ExpansionResult expand(Vector<Frontier> front, int min, int max, TempGrid tempg0, TempGrid tempg1,
+                                   int xGoal, int yGoal) {
+        // System.out.println("Expansion for " + Thread.currentThread() + "; min=" + min + "; max=" + max + "; xGoal=" + xGoal + "; yGoal=" + yGoal);
+        // boolean trace1 = false;
+        // code to run in parallel
+        ExpansionResult result = new ExpansionResult();
+        boolean reached0 = false;
+        boolean reached1 = false;
+
+        // while (!front.isEmpty()) {
+        for (int i = min; i < max; i++) {
+            int weight, prev_val;
+            Frontier f = (Frontier) front.elementAt(i);
+            // System.out.println("Element [" + i + "]; (" + f.x + "," + f.y + "," + f.z + ")");
+            // front.removeElementAt(0);
+            // if (trace1)
+            //     if(DEBUG)
+            //         System.out.println("X " + f.x + " Y " + f.y + " Z " + f.z + " processing - val "
+            //                            + getCorrectTempg(tempg0, tempg1, f.z).get(f.x, f.y));
+
+            weight = grid.getPoint(f.x,f.y + 1,f.z) + 1;
+            prev_val = getCorrectTempg(tempg0, tempg1, f.z).get(f.x, f.y + 1);
+            boolean reached = (f.x == xGoal) && (f.y + 1 == yGoal);
+            if ((prev_val > getCorrectTempg(tempg0, tempg1, f.z).get(f.x, f.y) + weight)
+                && (weight < OCC) || reached) {
+                if (ok(f.x, f.y + 1)) {
+                    getCorrectTempg(tempg0, tempg1, f.z).put(getCorrectTempg(tempg0, tempg1, f.z).get(f.x, f.y) + weight,
+                                                             f.x, f.y + 1); // looking north
+                    if (!reached)
+                        result.places.addElement(new Frontier(f.x, f.y + 1, f.z));
+                }
+            }
+            weight = grid.getPoint(f.x + 1,f.y,f.z) + 1;
+            prev_val = getCorrectTempg(tempg0, tempg1, f.z).get(f.x + 1, f.y);
+            reached = (f.x + 1 == xGoal) && (f.y == yGoal);
+            if ((prev_val > getCorrectTempg(tempg0, tempg1, f.z).get(f.x, f.y) + weight)
+                && (weight < OCC) || reached) {
+                if (ok(f.x + 1, f.y)) {
+                    getCorrectTempg(tempg0, tempg1, f.z).put(getCorrectTempg(tempg0, tempg1, f.z).get(f.x, f.y) + weight,
+                                                             f.x + 1, f.y); // looking east
+                    if (!reached)
+                        result.places.addElement(new Frontier(f.x + 1, f.y, f.z));
+                }
+            }
+            weight = grid.getPoint(f.x,f.y - 1,f.z) + 1;
+            prev_val = getCorrectTempg(tempg0, tempg1, f.z).get(f.x, f.y - 1);
+            reached = (f.x == xGoal) && (f.y - 1 == yGoal);
+            if ((prev_val > getCorrectTempg(tempg0, tempg1, f.z).get(f.x, f.y) + weight)
+                && (weight < OCC) || reached) {
+                if (ok(f.x, f.y - 1)) {
+                    getCorrectTempg(tempg0, tempg1, f.z).put(getCorrectTempg(tempg0, tempg1, f.z).get(f.x, f.y) + weight,
+                                                             f.x, f.y - 1); // looking south
+                    if (!reached)
+                        result.places.addElement(new Frontier(f.x, f.y - 1, f.z));
+                }
+            }
+            weight = grid.getPoint(f.x - 1,f.y,f.z) + 1;
+            prev_val = getCorrectTempg(tempg0, tempg1, f.z).get(f.x - 1, f.y);
+            reached = (f.x - 1 == xGoal) && (f.y == yGoal);
+            if ((prev_val > getCorrectTempg(tempg0, tempg1, f.z).get(f.x, f.y) + weight)
+                && (weight < OCC) || reached) {
+                if (ok(f.x - 1, f.y)) {
+                    getCorrectTempg(tempg0, tempg1, f.z).put(getCorrectTempg(tempg0, tempg1, f.z).get(f.x, f.y) + weight,
+                                                             f.x - 1, f.y); // looking west
+                    if (!reached)
+                        result.places.addElement(new Frontier(f.x - 1, f.y, f.z));
+                }
+            }
+            if (f.z == 0) {
+                weight = grid.getPoint(f.x,f.y,1) + 1;
+                if ((getCorrectTempg(tempg0, tempg1, 1).get(f.x, f.y) > getCorrectTempg(tempg0, tempg1, 0).get(f.x, f.y))
+                    && (weight < OCC)) {
+                    getCorrectTempg(tempg0, tempg1, 1).put(getCorrectTempg(tempg0, tempg1, 0).get(f.x, f.y), f.x, f.y);
+                    result.places.addElement(new Frontier(f.x, f.y, 1));
+                }
+            } else {
+                weight = grid.getPoint(f.x,f.y,0) + 1;
+                if ((getCorrectTempg(tempg0, tempg1, 0).get(f.x, f.y) > getCorrectTempg(tempg0, tempg1, 1).get(f.x, f.y))
+                    && (weight < OCC)) {
+                    getCorrectTempg(tempg0, tempg1, 0).put(getCorrectTempg(tempg0, tempg1, 1).get(f.x, f.y), f.x, f.y);
+                    result.places.addElement(new Frontier(f.x, f.y, 0));
+                }
+            }
+
+            // Random r = new java.util.Random((int)(Math.random()*1000000));
+            // int s = r.nextInt(5);
+            // System.out.println("" + Thread.currentThread() + " sleeping for " + s);
+        
+            // try{Thread.sleep(s * 1000);} catch (Exception e) { System.out.println("no problemo");e.printStackTrace(); }
+            // must check if found goal, if so return TRUE
+            reached0 = getCorrectTempg(tempg0, tempg1, 0).get(xGoal, yGoal) != TEMP_EMPTY;
+            reached1 = getCorrectTempg(tempg0, tempg1, 1).get(xGoal, yGoal) != TEMP_EMPTY;
+            if (reached0 && reached1) {
+                // if (xGoal, yGoal) can be found in time
+                result.reached = true;
+                // return result;
+                break;
+            }
+        }
+        return result;
+    }
+
     private boolean pathFromOtherSide(TempGrid g0, TempGrid g1, int X, int Y, int Z) {
         boolean ok;
         int Zo;
@@ -691,6 +798,8 @@ public class LeeRouter {
     
     public static long initialTime;
     
+    private static ExecutorService threadPool;
+
     public static void main(String [] args) {
         if(args.length!=2) {
             System.out.println("Params: [numthreads] [input-file]");
@@ -702,6 +811,9 @@ public class LeeRouter {
         
         int numMillis = 600000;
         
+        // setup the thread pool
+        threadPool = Executors.newFixedThreadPool(10);
+
 //		 Set up the benchmark
         long startTime = 0;
         long currentTime = 0;
@@ -730,7 +842,8 @@ public class LeeRouter {
             System.exit(0);
         }
         long elapsedTime = startTime - currentTime;
-       // int throughput = (int) (LeeRouter.netNo / elapsedTime);
+        threadPool.shutdown();
+        // int throughput = (int) (LeeRouter.netNo / elapsedTime);
         //System.out.println("Numthreads: " + numThreads);
         //System.out.println("Throughput:  " + throughput);
         //System.out.println("ElapsedTime: " + elapsedTime);
@@ -810,4 +923,36 @@ public class LeeRouter {
 	return ((z == 0) ? tempg0 : tempg1);
     }
 
+
+    static final class ExpansionTask extends NestedWorkUnit<ExpansionResult> {
+        final Vector<Frontier> front;
+        final int min, max, xGoal, yGoal;
+        final TempGrid tempg0, tempg1;
+        final LeeRouter lr;
+
+        // front is shared, so can only acces to read.  Expand places in [min;max[
+        ExpansionTask(Vector<Frontier> front, int min, int max, TempGrid tempg0, TempGrid tempg1, int xGoal, int yGoal,
+                      LeeRouter lr) {
+            this.front = front;
+            this.min = min;
+            this.max = max;
+            this.tempg0 = tempg0;
+            this.tempg1 = tempg1;
+            this.xGoal = xGoal;
+            this.yGoal = yGoal;
+            this.lr = lr;
+        }
+
+        @Override
+        public ExpansionResult execute() throws Throwable {
+            // make nested transactions for each subset within [min;max[
+
+            return lr.expand(front, min, max, tempg0, tempg1, xGoal, yGoal);
+        }
+    }
+
+    static final class ExpansionResult {
+        Vector<Frontier> places = new Vector<Frontier>();
+        boolean reached = false;
+    }
 }
