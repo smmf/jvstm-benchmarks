@@ -1,4 +1,4 @@
-package stamp.vacation.jvstm.nonest.treemap;
+package stamp.vacation.jvstm;
 
 /* =============================================================================
  * reservation_info_alloc

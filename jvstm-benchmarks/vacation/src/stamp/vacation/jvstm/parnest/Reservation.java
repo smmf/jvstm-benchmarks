@@ -1,11 +1,12 @@
-package stamp.vacation.jvstm.nonest.treemap;
+package stamp.vacation.jvstm.parnest;
 
 import jvstm.CommitException;
+import jvstm.VBoxInt;
 
 /* =============================================================================
  *
- * customer.c
- * -- Representation of customer
+ * reservation.c
+ * -- Representation of car, flight, and hotel relations
  *
  * =============================================================================
  *
@@ -73,85 +74,124 @@ import jvstm.CommitException;
  * =============================================================================
  */
 
-public class Customer {
+public class Reservation implements Comparable<Reservation> {
+    // VBoxes on these
+    final VBoxInt id;
+    final VBoxInt numUsed;
+    final VBoxInt numFree;
+    final VBoxInt numTotal;
+    final VBoxInt price;
 
-    /*
-     * ==========================================================================
-     * === compareReservationInfo
-     * ================================================
-     * =============================
-     */
-    final int id;
-    final List_t<Reservation_Info> reservationInfoList;
-
-    /*
-     * ==========================================================================
-     * === customer_alloc
-     * ========================================================
-     * =====================
-     */
-    public Customer(int id) {
-	this.id = id;
-	reservationInfoList = new List_t<Reservation_Info>();
+    public Reservation(int id, int numTotal, int price) {
+	this.id = new VBoxInt(id);
+	this.numUsed = new VBoxInt(0);
+	this.numFree = new VBoxInt(numTotal);
+	this.numTotal = new VBoxInt(numTotal);
+	this.price = new VBoxInt(price);
+	checkReservation();
     }
 
-    /*
-     * ==========================================================================
-     * === customer_compare -- Returns -1 if A < B, 0 if A = B, 1 if A > B
-     * ======
-     * =======================================================================
-     */
-    int customer_compare(Customer aPtr, Customer bPtr) {
-	return (aPtr.id - bPtr.id);
+    public void checkReservation() {
+	int numUsed = this.numUsed.get();
+
+	int numFree = this.numFree.get();
+
+	int numTotal = this.numTotal.get();
+
+	int price = this.price.get();
     }
 
-    /*
-     * ==========================================================================
-     * === customer_addReservationInfo -- Returns true if success, else FALSE
-     * ====
-     * =========================================================================
-     */
-    boolean customer_addReservationInfo(int type, int id, int price) {
-	Reservation_Info reservationInfo = new Reservation_Info(type, id, price);
-
-	reservationInfoList.add(reservationInfo);
-	return true;
-    }
-
-    /*
-     * ==========================================================================
-     * === customer_removeReservationInfo -- Returns true if success, else FALSE
-     * ==
-     * ========================================================================
-     * ===
-     */
-    boolean customer_removeReservationInfo(int type, int id) {
-	Reservation_Info reservationInfo = reservationInfoList.find(type, id);
-
-	if (reservationInfo == null) {
+    boolean reservation_addToTotal(int num) {
+	if (numFree.get() + num < 0) {
 	    return false;
 	}
 
-	boolean status = reservationInfoList.remove(reservationInfo);
-	if (!status) {
-	    jvstm.util.Debug.print("COMMIT EXCEPTION - removeResInfo " + Thread.currentThread().getId());
-	    throw new CommitException();
-	}
+	numFree.put(numFree.get() + num);
+	numTotal.put(numTotal.get() + num);
+	checkReservation();
 	return true;
     }
 
     /*
      * ==========================================================================
-     * === customer_getBill -- Returns total cost of reservations
-     * ================
-     * =============================================================
+     * === reservation_make -- Returns TRUE on success, else FALSE
+     * ==============
+     * ===============================================================
      */
-    int customer_getBill() {
-	int bill = 0;
-	for (Reservation_Info it : reservationInfoList) {
-	    bill += it.price;
+    public boolean reservation_make() {
+	if (numFree.get() < 1) {
+	    return false;
+	}
+	numUsed.put(numUsed.get() + 1);
+	numFree.put(numFree.get() - 1);
+	checkReservation();
+	return true;
+    }
+
+    /*
+     * ==========================================================================
+     * === reservation_cancel -- Returns TRUE on success, else FALSE
+     * ============
+     * =================================================================
+     */
+    boolean reservation_cancel() {
+	if (numUsed.get() < 1) {
+	    return false;
+	}
+	numUsed.put(numUsed.get() - 1);
+	numFree.put(numFree.get() + 1);
+	checkReservation();
+	return true;
+    }
+
+    /*
+     * ==========================================================================
+     * === reservation_updatePrice -- Failure if 'price' < 0 -- Returns TRUE on
+     * success, else FALSE
+     * ======================================================
+     * =======================
+     */
+    boolean reservation_updatePrice(int newPrice) {
+	if (newPrice < 0) {
+	    return false;
 	}
 
-	return bill;
+	this.price.put(newPrice);
+	checkReservation();
+	return true;
     }
+
+    /*
+     * ==========================================================================
+     * === reservation_compare -- Returns -1 if A < B, 0 if A = B, 1 if A > B
+     * ====
+     * =========================================================================
+     */
+    int reservation_compare(Reservation aPtr, Reservation bPtr) {
+	return aPtr.id.get() - bPtr.id.get();
+    }
+
+    /*
+     * ==========================================================================
+     * === reservation_hash
+     * ======================================================
+     * =======================
+     */
+    int reservation_hash() {
+	return id.get();
+    }
+
+    @Override
+    public int compareTo(Reservation arg0) {
+	int myId = this.id.get();
+	int hisId = arg0.id.get();
+	if (myId < hisId) {
+	    return -1;
+	} else if (myId == hisId) {
+	    return 0;
+	} else {
+	    return 1;
+	}
+    }
+
 }

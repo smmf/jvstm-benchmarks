@@ -1,12 +1,11 @@
-package stamp.vacation.jvstm.nonest.treemap;
+package stamp.vacation.jvstm.parnest;
 
 import jvstm.CommitException;
-import jvstm.VBoxInt;
 
 /* =============================================================================
  *
- * reservation.c
- * -- Representation of car, flight, and hotel relations
+ * customer.c
+ * -- Representation of customer
  *
  * =============================================================================
  *
@@ -74,145 +73,81 @@ import jvstm.VBoxInt;
  * =============================================================================
  */
 
-public class Reservation implements Comparable<Reservation> {
-    // VBoxes on these
-    final VBoxInt id;
-    final VBoxInt numUsed;
-    final VBoxInt numFree;
-    final VBoxInt numTotal;
-    final VBoxInt price;
-
-    public Reservation(int id, int numTotal, int price) {
-	this.id = new VBoxInt(id);
-	this.numUsed = new VBoxInt(0);
-	this.numFree = new VBoxInt(numTotal);
-	this.numTotal = new VBoxInt(numTotal);
-	this.price = new VBoxInt(price);
-	checkReservation();
-    }
-
-    public void checkReservation() {
-	int numUsed = this.numUsed.get();
-	if (numUsed < 0) {
-	    jvstm.util.Debug.print("COMMIT EXCEPTION - checkReservation numUsed < 0" + Thread.currentThread().getId());
-	    throw new CommitException();
-	}
-
-	int numFree = this.numFree.get();
-	if (numFree < 0) {
-	    jvstm.util.Debug.print("COMMIT EXCEPTION - checkReservation numFree < 0" + Thread.currentThread().getId());
-	    throw new CommitException();
-	}
-
-	int numTotal = this.numTotal.get();
-	if (numTotal < 0) {
-	    jvstm.util.Debug.print("COMMIT EXCEPTION - checkReservation numTotal < 0" + Thread.currentThread().getId());
-	    throw new CommitException();
-	}
-
-	if ((numUsed + numFree) != numTotal) {
-	    jvstm.util.Debug.print("COMMIT EXCEPTION - checkReservation does not match" + Thread.currentThread().getId());
-	    throw new CommitException();
-	}
-
-	int price = this.price.get();
-	if (price < 0) {
-	    jvstm.util.Debug.print("COMMIT EXCEPTION - checkReservation price < 0 " + Thread.currentThread().getId());
-	    throw new CommitException();
-	}
-    }
-
-    boolean reservation_addToTotal(int num) {
-	if (numFree.get() + num < 0) {
-	    return false;
-	}
-
-	numFree.put(numFree.get() + num);
-	numTotal.put(numTotal.get() + num);
-	checkReservation();
-	return true;
-    }
+public class Customer {
 
     /*
      * ==========================================================================
-     * === reservation_make -- Returns TRUE on success, else FALSE
-     * ==============
-     * ===============================================================
+     * === compareReservationInfo
+     * ================================================
+     * =============================
      */
-    public boolean reservation_make() {
-	if (numFree.get() < 1) {
-	    return false;
-	}
-	numUsed.put(numUsed.get() + 1);
-	numFree.put(numFree.get() - 1);
-	checkReservation();
-	return true;
-    }
+    final int id;
+    final List_t<Reservation_Info> reservationInfoList;
 
     /*
      * ==========================================================================
-     * === reservation_cancel -- Returns TRUE on success, else FALSE
-     * ============
-     * =================================================================
+     * === customer_alloc
+     * ========================================================
+     * =====================
      */
-    boolean reservation_cancel() {
-	if (numUsed.get() < 1) {
-	    return false;
-	}
-	numUsed.put(numUsed.get() - 1);
-	numFree.put(numFree.get() + 1);
-	checkReservation();
-	return true;
+    public Customer(int id) {
+	this.id = id;
+	reservationInfoList = new List_t<Reservation_Info>();
     }
 
     /*
      * ==========================================================================
-     * === reservation_updatePrice -- Failure if 'price' < 0 -- Returns TRUE on
-     * success, else FALSE
-     * ======================================================
-     * =======================
+     * === customer_compare -- Returns -1 if A < B, 0 if A = B, 1 if A > B
+     * ======
+     * =======================================================================
      */
-    boolean reservation_updatePrice(int newPrice) {
-	if (newPrice < 0) {
-	    return false;
-	}
-
-	this.price.put(newPrice);
-	checkReservation();
-	return true;
+    int customer_compare(Customer aPtr, Customer bPtr) {
+	return (aPtr.id - bPtr.id);
     }
 
     /*
      * ==========================================================================
-     * === reservation_compare -- Returns -1 if A < B, 0 if A = B, 1 if A > B
+     * === customer_addReservationInfo -- Returns true if success, else FALSE
      * ====
      * =========================================================================
      */
-    int reservation_compare(Reservation aPtr, Reservation bPtr) {
-	return aPtr.id.get() - bPtr.id.get();
+    boolean customer_addReservationInfo(int type, int id, int price) {
+	Reservation_Info reservationInfo = new Reservation_Info(type, id, price);
+
+	reservationInfoList.add(reservationInfo);
+	return true;
     }
 
     /*
      * ==========================================================================
-     * === reservation_hash
-     * ======================================================
-     * =======================
+     * === customer_removeReservationInfo -- Returns true if success, else FALSE
+     * ==
+     * ========================================================================
+     * ===
      */
-    int reservation_hash() {
-	return id.get();
-    }
+    boolean customer_removeReservationInfo(int type, int id) {
+	Reservation_Info reservationInfo = reservationInfoList.find(type, id);
 
-    @Override
-    public int compareTo(Reservation arg0) {
-	int myId = this.id.get();
-	int hisId = arg0.id.get();
-	if (myId < hisId) {
-	    return -1;
-	} else if (myId == hisId) {
-	    return 0;
-	} else {
-	    return 1;
+	if (reservationInfo == null) {
+	    return false;
 	}
+
+	reservationInfoList.remove(reservationInfo);
+	return true;
     }
 
+    /*
+     * ==========================================================================
+     * === customer_getBill -- Returns total cost of reservations
+     * ================
+     * =============================================================
+     */
+    int customer_getBill() {
+	int bill = 0;
+	for (Reservation_Info it : reservationInfoList) {
+	    bill += it.price;
+	}
+
+	return bill;
+    }
 }

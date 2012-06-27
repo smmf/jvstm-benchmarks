@@ -1,6 +1,9 @@
-package stamp.vacation.jvstm.nonest.treemap;
+package stamp.vacation.jvstm;
+
+import java.util.concurrent.atomic.AtomicLong;
 
 import jvstm.CommitException;
+import jvstm.EarlyAbortException;
 import jvstm.Transaction;
 
 public class UpdateTablesOperation extends Operation {
@@ -36,23 +39,21 @@ public class UpdateTablesOperation extends Operation {
 	}
     }
 
+
     @Override
     public void doOperation() {
 	while (true) {
 	    Transaction tx = Transaction.begin();
-	    // Debug.print("[Update] Started top level tx in thread " +
-	    // Thread.currentThread().getId() + " " + tx);
 	    try {
 		updateTablesNotNested();
 		tx.commit();
-		// Debug.print("[Update] Committed top level tx in thread " +
-		// Thread.currentThread().getId() + " " + tx);
 		tx = null;
 		return;
+	    } catch (EarlyAbortException eae) {
+		tx.abort();
+		tx = null;
 	    } catch (CommitException ce) {
 		tx.abort();
-		// Debug.print("[Update] Aborted top level tx in thread " +
-		// Thread.currentThread().getId() + " " + tx);
 		tx = null;
 	    } finally {
 		if (tx != null) {

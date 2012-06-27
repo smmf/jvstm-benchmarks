@@ -1,6 +1,15 @@
-package stamp.vacation.jvstm.nonest.treemap;
+package stamp.vacation.jvstm.parnest;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 
 import jvstm.CommitException;
+import jvstm.EarlyAbortException;
+import jvstm.ParallelTask;
 import jvstm.Transaction;
 
 public class MakeReservationOperation extends Operation {
@@ -45,19 +54,20 @@ public class MakeReservationOperation extends Operation {
     public void doOperation() {
 	while (true) {
 	    Transaction tx = Transaction.begin();
-	    // Debug.print("[Reserve] Started top level tx in thread " +
-	    // Thread.currentThread().getId() + " " + tx);
 	    try {
-		makeReservationNotNested();
+		if (Operation.nestedParallelismOn) {
+		    makeReservation();
+		} else {
+		    makeReservationNotNested();
+		}
 		tx.commit();
-		// Debug.print("[Reserve] Committed top level tx in thread " +
-		// Thread.currentThread().getId() + " " + tx);
 		tx = null;
 		return;
+	    } catch (EarlyAbortException ce) {
+		tx.abort();
+		tx = null;
 	    } catch (CommitException ce) {
 		tx.abort();
-		// Debug.print("[Reserve] Aborted top level tx in thread " +
-		// Thread.currentThread().getId() + " " + tx);
 		tx = null;
 	    } finally {
 		if (tx != null) {
@@ -65,6 +75,55 @@ public class MakeReservationOperation extends Operation {
 		}
 	    }
 	}
+    }
+
+    private class NestedWorker extends ParallelTask<Boolean> {
+
+	private final int min;
+	private final int max;
+
+	public NestedWorker(int min, int max) {
+	    this.min = min;
+	    this.max = max;
+	}
+
+	@Override
+	public Boolean execute() throws Throwable {
+	    boolean isFound = false;
+	    int n;
+	    for (n = min; n < max; n++) {
+		int t = types[n];
+		int id = ids[n];
+		int price = -1;
+		if (t == Definitions.RESERVATION_CAR) {
+		    if (manager.manager_queryCar(id) >= 0) {
+			price = manager.manager_queryCarPrice(id);
+		    }
+		} else if (t == Definitions.RESERVATION_FLIGHT) {
+		    if (manager.manager_queryFlight(id) >= 0) {
+			price = manager.manager_queryFlightPrice(id);
+		    }
+		} else if (t == Definitions.RESERVATION_ROOM) {
+		    if (manager.manager_queryRoom(id) >= 0) {
+			price = manager.manager_queryRoomPrice(id);
+		    }
+		} else {
+		    assert (false);
+		}
+		if (price > maxPrices[t]) {
+		    maxPrices[t] = price;
+		    maxIds[t] = id;
+		    isFound = true;
+		}
+	    }
+	    return isFound;
+	}
+	
+	@Override
+	protected boolean isReadOnly() {
+	    return true;
+	}
+
     }
 
     private void makeReservationNotNested() {
@@ -109,4 +168,35 @@ public class MakeReservationOperation extends Operation {
 	    manager.manager_reserveRoom(customerId, maxIds[Definitions.RESERVATION_ROOM]);
 	}
     }
+
+    private void makeReservation() {
+	boolean isFound = false;
+	int n;
+	int queriesPerTx = numQuery / Operation.numberAvailableThreads;
+	List<NestedWorker> workers = new ArrayList<NestedWorker>();
+	for (n = 0; n < numQuery; n += queriesPerTx) {
+	    workers.add(new NestedWorker(n, n + queriesPerTx));
+	} /* for n */
+
+	for (Boolean res : Transaction.current().manageNestedParallelTxs(workers, Vacation.threadPool)) {
+	    if (res) {
+		isFound = true;
+		break;
+	    }
+	}
+	
+	if (isFound) {
+	    manager.manager_addCustomer(customerId);
+	}
+	if (maxIds[Definitions.RESERVATION_CAR] > 0) {
+	    manager.manager_reserveCar(customerId, maxIds[Definitions.RESERVATION_CAR]);
+	}
+	if (maxIds[Definitions.RESERVATION_FLIGHT] > 0) {
+	    manager.manager_reserveFlight(customerId, maxIds[Definitions.RESERVATION_FLIGHT]);
+	}
+	if (maxIds[Definitions.RESERVATION_ROOM] > 0) {
+	    manager.manager_reserveRoom(customerId, maxIds[Definitions.RESERVATION_ROOM]);
+	}
+    }
+
 }

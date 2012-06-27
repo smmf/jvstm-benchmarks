@@ -1,9 +1,9 @@
-package stamp.vacation.jvstm.nonest.treemap;
+package stamp.vacation.jvstm.parnest.annotated;
 
 public abstract class Operation {
 
     public static boolean nestedParallelismOn;
-    public static int numberParallelSiblings;
+    public static int numberAvailableThreads;
     public static boolean parallelizeUpdateTables;
 
     public abstract void doOperation();

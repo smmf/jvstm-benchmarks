@@ -1,0 +1,6 @@
+There are three different implementations of Vacation here, organized by package:
+	- stamp.vacation.jvstm - normal implementation with VBoxes
+	- stamp.vacation.jvstm.parnest - parametrized implementation that allows exploiting parallel nesting
+	- stamp.vacation.jvstm.parnest.annotated - equivalent to the previous one, but implemented with annotations
+
+Look into the bash scripts for a better understanding on how to use the benchmark in each case.

@@ -1,4 +1,8 @@
-package stamp.vacation.jvstm.nonest.treemap;
+package stamp.vacation.jvstm.parnest;
+
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ThreadFactory;
 
 public class Vacation {
 
@@ -39,9 +43,9 @@ public class Vacation {
 	setDefaultParams();
 	for (int i = 0; i < argv.length; i++) {
 	    String arg = argv[i];
-	    if (arg.equals("-c"))
+	    if (arg.equals("-c")) {
 		CLIENTS = Integer.parseInt(argv[++i]);
-	    else if (arg.equals("-n"))
+	    } else if (arg.equals("-n"))
 		NUMBER = Integer.parseInt(argv[++i]);
 	    else if (arg.equals("-q"))
 		QUERIES = Integer.parseInt(argv[++i]);
@@ -53,8 +57,18 @@ public class Vacation {
 		USER = Integer.parseInt(argv[++i]);
 	    else if (arg.equals("-nest"))
 		Operation.nestedParallelismOn = Boolean.parseBoolean(argv[++i]);
-	    else if (arg.equals("-sib"))
-		Operation.numberParallelSiblings = Integer.parseInt(argv[++i]);
+	    else if (arg.equals("-sib")) {
+		Operation.numberAvailableThreads = Integer.parseInt(argv[++i]);
+		threadPool = Executors.newFixedThreadPool(CLIENTS * Operation.numberAvailableThreads, new ThreadFactory() {
+		    @Override
+		    public Thread newThread(Runnable r) {
+			Thread t = new Thread(r);
+			t.setDaemon(true);
+			return t;
+		    }
+		});
+		
+	    }
 	    else if (arg.equals("-updatePar"))
 		Operation.parallelizeUpdateTables = Boolean.parseBoolean(argv[++i]);
 	    else
@@ -66,6 +80,8 @@ public class Vacation {
 	}
     }
 
+    protected static ExecutorService threadPool;
+    
     public Manager initializeManager() {
 	int i;
 	int t;

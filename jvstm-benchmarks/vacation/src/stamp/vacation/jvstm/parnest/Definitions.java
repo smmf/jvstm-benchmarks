@@ -1,4 +1,4 @@
-package stamp.vacation.jvstm.nonest.treemap;
+package stamp.vacation.jvstm.parnest;
 public class Definitions {
 
     public final static int ACTION_MAKE_RESERVATION = 0;
