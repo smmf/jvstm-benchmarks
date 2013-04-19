@@ -623,8 +623,11 @@ public class Benchmark {
 	}
 
 	private String formatDouble(double number) {
+		String res;
 		Formatter formatter = new Formatter();
 		formatter.format("%3.2f", number);
-		return formatter.toString();
+		res = formatter.toString();
+		formatter.close();
+		return res;
 	}
 }

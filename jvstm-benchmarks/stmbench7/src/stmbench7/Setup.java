@@ -1,5 +1,6 @@
 package stmbench7;
 
+import jvstm.Transaction;
 import stmbench7.annotations.Immutable;
 import stmbench7.backend.BackendFactory;
 import stmbench7.backend.Index;
@@ -37,6 +38,7 @@ public class Setup {
 	public Setup() throws InterruptedException {
 		BackendFactory backendFactory = BackendFactory.instance;
 
+		if (Benchmark.JVSTM) Transaction.beginUnsafeSingleThreaded();
 		atomicPartIdIndex = backendFactory
 				.<Integer, AtomicPart> createIndex();
 		atomicPartBuildDateIndex = backendFactory
@@ -55,6 +57,7 @@ public class Setup {
 				atomicPartIdIndex, atomicPartBuildDateIndex);
 		moduleBuilder = new ModuleBuilder(baseAssemblyIdIndex,
 				complexAssemblyIdIndex);
+		if (Benchmark.JVSTM) Transaction.commit();
 
 		SetupDataStructure setupOperation = new SetupDataStructure(this);
 		OperationExecutorFactory.executeSequentialOperation(setupOperation);

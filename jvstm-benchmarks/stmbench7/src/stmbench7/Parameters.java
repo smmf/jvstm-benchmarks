@@ -108,7 +108,7 @@ public class Parameters {
 	 */
 	@Immutable
 	public enum WorkloadType {
-	    	READ_ONLY(100),
+		READ_ONLY(100),
 		READ_DOMINATED(90),
 		READ_WRITE(60),
 		WRITE_DOMINATED(10);
@@ -137,8 +137,8 @@ public class Parameters {
 	public static boolean longTraversalsEnabled = true,
 		structureModificationEnabled = true,
 		sequentialReplayEnabled = false,
-	        longReadWriteTraversalsEnabled = true,
-	        WarmUpEnabled = false;
+		longReadWriteTraversalsEnabled = true,
+		WarmUpEnabled = false;
 
 	/**
 	 * STM-specific command-line parameters. To be parsed by a given STM

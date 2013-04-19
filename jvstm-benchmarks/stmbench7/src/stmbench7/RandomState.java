@@ -24,8 +24,6 @@
  */
 package stmbench7;
 
-import java.util.concurrent.atomic.AtomicLong;
-
 class RandomState {
 	public static final long serialVersionUID = 1L;
 
