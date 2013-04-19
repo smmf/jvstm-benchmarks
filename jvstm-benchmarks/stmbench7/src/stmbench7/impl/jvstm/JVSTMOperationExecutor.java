@@ -1,27 +1,32 @@
 package stmbench7.impl.jvstm;
 
-import jvstm.Transaction;
-import stmbench7.BenchThread;
+import jvstm.Atomic;
 import stmbench7.OperationExecutor;
-import stmbench7.Parameters;
-import stmbench7.ThreadRandom;
 import stmbench7.core.Operation;
 import stmbench7.core.OperationFailedException;
 import stmbench7.core.RuntimeError;
 
 public class JVSTMOperationExecutor implements OperationExecutor {
 
-	private static final ThreadLocal<Integer> lastLocalOperationTimestamp = new ThreadLocal<Integer>() {
+	public static final ThreadLocal<Integer> lastLocalOperationTimestamp = new ThreadLocal<Integer>() {
 		@Override
 		protected Integer initialValue() { return 0; }
 	};
 
+	public static final ThreadLocal<Integer> lastOperationTimestamp = new ThreadLocal<Integer>() {
+		@Override
+		protected Integer initialValue() { return 0; }
+	};
+
+	public static final ThreadLocal<Boolean> wasWriteTransaction = new ThreadLocal<Boolean>() {
+		@Override
+		protected Boolean initialValue() { return Boolean.FALSE; }
+	};
+
 	private final Operation op;
 
-	private boolean readOnly;
 	private boolean idNull = false;
-	private int lastOperationTimestamp = 0;
-	private boolean wasReadOnly;
+	private boolean readOnly;
 
 	public JVSTMOperationExecutor(Operation op) {
 		this.op = op;
@@ -54,49 +59,22 @@ public class JVSTMOperationExecutor implements OperationExecutor {
 	}
 
 	private int txExecute() throws OperationFailedException {
-		boolean conflictNoted = false;
-		Transaction tx = null;
+		if (readOnly) return txExecuteReadOnly();
+		else return txExecuteReadWrite();
+	}
 
-		while (true) {
-			JVSTMStats.noteTransaction(readOnly, BenchThread.ID.get());
+	@Atomic(readOnly=true, adviceFactory=JVSTMAdviceFactory.class)
+	private int txExecuteReadOnly() throws OperationFailedException {
+		return op.performOperation();
+	}
 
-			try{
-                                boolean opSuccess = true; // default only changes when CommitException occurs eagerly
-				Transaction.begin(readOnly);
-				tx = Transaction.current();
-				try {
-					ThreadRandom.saveState();
-					int result = op.performOperation();
-                                        return result;
-                                } catch (jvstm.CommitException ce) {
-                                    opSuccess = false;
-                                    throw ce;
-				} finally {
-                                    wasReadOnly = !tx.isWriteTransaction();
-                                    if (opSuccess) { // commit unless a CommitException occurred during performOperation()
-                                        Transaction.commit();
-					if (Parameters.sequentialReplayEnabled) {
-						lastLocalOperationTimestamp.set(lastLocalOperationTimestamp.get() + 1);
-						lastOperationTimestamp = tx.getNumber();
-					}
-                                    }
-				}
-			}  catch (jvstm.CommitException ce) {
-				ThreadRandom.restoreState();
-				if (readOnly) throw new Error("Read-Only Transactions should never fail!");
-
-				if (!conflictNoted) {
-					JVSTMStats.noteConflict(BenchThread.ID.get());
-					conflictNoted = true;
-				}
-				jvstm.Transaction.abort();
-				JVSTMStats.noteRestart(BenchThread.ID.get());
-			}
-		}
+	@Atomic(readOnly=false, adviceFactory=JVSTMAdviceFactory.class)
+	private int txExecuteReadWrite() throws OperationFailedException {
+		return op.performOperation();
 	}
 
 	public int getLastOperationTimestamp() {
-		return lastOperationTimestamp;
+		return lastOperationTimestamp.get();
 	}
 
 	public int getLastLocalOperationTimestamp() {
@@ -105,7 +83,7 @@ public class JVSTMOperationExecutor implements OperationExecutor {
 
 	@Override
 	public boolean isOperationReadOnly() {
-		return wasReadOnly;
+		return !wasWriteTransaction.get();
 	}
 
 }

@@ -35,13 +35,22 @@
 		<delete dir="${dist.dir}"/>
 	</target>
 
-	<target name="compile" depends="-init, -libs" description="Compiles STMbench7">
+	<target name="compile" depends="-init, -libs" description="Compiles the STMBench7 benchmark.">
 		<antcall target="-compile-libs"/>
 		<antcall target="-compile-no-libs"/>
 	</target>
 
+	<target name="compile-jvstm" depends="compile" description="Compiles the STMBench7 to work with the JVSTM. WARNING: Brakes other (non-JVSTM) versions.">
+		<java classname="pt.ist.esw.advice.ProcessAnnotations" fork="true">
+			<arg value="-a"/>
+			<arg value="jvstm.Atomic"/>
+			<arg value="${build.dir}"/>
+			<classpath refid="project.class.path"/>
+                </java>
+	</target>
+
 	<target name="-compile-libs" if="jvstm.present">
-		<javac destdir="${build.dir}" extdirs="${lib.dir}" debug="true"	deprecation="true" debuglevel="lines,vars,source">
+		<javac destdir="${build.dir}" extdirs="${lib.dir}" debug="true" deprecation="true" debuglevel="lines,vars,source">
 			<compilerarg value="-Xlint:unchecked"/>
 			<src path="${java.src.dir}"/>
 			<exclude name="stmbench7/test/**/*.java" />
@@ -107,9 +116,14 @@
 		<antcall target="-run-no-args"/>
 	</target>
 
+	<target name="-run-jvstm" depends="compile-jvstm, -testArgs">
+		<antcall target="-run-args"/>
+		<antcall target="-run-no-args"/>
+	</target>
+
 	<target name="-testArgs">
 		<condition property="args.set">
-      			<not><equals arg1="${args}" arg2="$${args}"/></not>
+			<not><equals arg1="${args}" arg2="$${args}"/></not>
 		</condition>
 	</target>
 
@@ -144,7 +158,7 @@
 	</target>
 
 	<target name="run-jvstm" description="Runs the benchmark with the jvstm">
-		<antcall target="-run">
+		<antcall target="-run-jvstm">
 			<param name="synch" value="-g stm -s stmbench7.impl.jvstm.JVSTMInitializer"/>
 		</antcall>
 	</target>
