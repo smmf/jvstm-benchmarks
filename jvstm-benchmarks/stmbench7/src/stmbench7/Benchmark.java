@@ -1,9 +1,14 @@
 package stmbench7;
 
+import static stmbench7.Parameters.ExecutionType.NORMAL;
+import static stmbench7.Parameters.ExecutionType.OPS_PER_TX;
+import static stmbench7.Parameters.ExecutionType.TOTAL_OPS;
+
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Formatter;
 
+import stmbench7.Parameters.ExecutionType;
 import stmbench7.annotations.NonAtomic;
 import stmbench7.backend.BackendFactory;
 import stmbench7.core.DesignObjFactory;
@@ -25,6 +30,7 @@ import stmbench7.impl.jvstm.JVSTMStats;
 public class Benchmark {
 
 	public static final String VERSION = "1.0(15.02.2011)";
+	public static ExecutionType type = NORMAL;
 
 	class BenchmarkParametersException extends Exception {
 		private static final long serialVersionUID = 6341915439489283553L;
@@ -56,7 +62,7 @@ public class Benchmark {
 
 		if (Parameters.WarmUpEnabled) {
 			// make a first run to warm up the machine
-			Parameters.numSeconds = Parameters.WarmUpTime;
+			type.setLimit(Parameters.WarmUpTime);
 			benchmark.start();
 			//benchmark.checkInvariants(false);
 			System.gc();
@@ -154,10 +160,12 @@ public class Benchmark {
 				} else {
 					String optionValue = args[argNumber++];
 					if (currentArg.equals("-t")) Parameters.numThreads = Integer.parseInt(optionValue);
-					else if (currentArg.equals("-l")) Parameters.numSeconds = Integer.parseInt(optionValue);
+					else if (currentArg.equals("-l")) { type = NORMAL; type.setLimit(Integer.parseInt(optionValue)); }
 					else if (currentArg.equals("-w")) workload = optionValue;
 					else if (currentArg.equals("-g")) synchType = optionValue;
 					else if (currentArg.equals("-s")) stmInitializerClassName = optionValue;
+					else if (currentArg.equals("--ops")) { type = OPS_PER_TX; type.setLimit(Integer.parseInt(optionValue)); }
+					else if (currentArg.equals("--totalOps")) { type = TOTAL_OPS; type.setLimit(Integer.parseInt(optionValue)); }
 					else if (currentArg.equals("--warm-up")) {
 						Parameters.WarmUpEnabled = true;
 						try {
@@ -246,12 +254,12 @@ public class Benchmark {
 		printSection("Benchmark parameters");
 
 		System.out.println("Number of threads: " + Parameters.numThreads + "\n" +
-				"Length: " + Parameters.numSeconds + " s\n" +
+				"Length: " + type + "\n" +
 				"Workload: " + Parameters.workloadType + "\n" +
 				"Synchronization method: " + Parameters.synchronizationType + "\n" +
 				"Warm-Up " + (Parameters.WarmUpEnabled ? "enabled: " + Parameters.WarmUpTime + " seconds" : "disabled") + "\n" +
 				"Long traversals " + (Parameters.longTraversalsEnabled ? "enabled" : "disabled") + "\n" +
-				"Long Read-Write traversals " + (Parameters.longReadWriteTraversalsEnabled ? "enabled" : "disabled") + "\n" +
+				"Long Read-Write traversals " + ((Parameters.longTraversalsEnabled && Parameters.longReadWriteTraversalsEnabled) ? "enabled" : "disabled") + "\n" +
 				"Structural modification operations " + (Parameters.structureModificationEnabled ? "enabled" : "disabled") + "\n" +
 				"DesignObjFactory: " + DesignObjFactory.instance.getClass().getName() + "\n" +
 				"BackendFactory: " + BackendFactory.instance.getClass().getName() + "\n" +
@@ -342,10 +350,23 @@ public class Benchmark {
 		System.err.println("Setup start...");
 		setup = new Setup();
 
+		if (type == TOTAL_OPS) {
+			BenchThreadTotalOps.buildOps(operationCDF, type._limit);
+		}
+
 		benchThreads = new BenchThread[Parameters.numThreads];
 		threads = new Thread[Parameters.numThreads];
 		for (short threadNum = 0; threadNum < Parameters.numThreads; threadNum++) {
-			benchThreads[threadNum] = new BenchThread(setup, operationCDF, threadNum);
+			switch (type) {
+				case NORMAL:
+					benchThreads[threadNum] = new BenchThread(setup, operationCDF, threadNum);
+					break;
+				case OPS_PER_TX:
+					benchThreads[threadNum] = new BenchThreadOps(setup, operationCDF, threadNum);
+					break;
+				case TOTAL_OPS:
+					benchThreads[threadNum] = new BenchThreadTotalOps(setup, operationCDF, threadNum);
+			}
 			threads[threadNum] = ThreadFactory.instance.createThread(benchThreads[threadNum]);
 		}
 		System.err.println("Setup completed.");
@@ -383,9 +404,11 @@ public class Benchmark {
 
 		for (Thread thread : threads) thread.start();
 
-		Thread.sleep(Parameters.numSeconds * 1000);
+		if (type == NORMAL) {
+			Thread.sleep(type.getLimit() * 1000);
+			for (BenchThread thread : benchThreads) thread.stopThread();
+		}
 
-		for (BenchThread thread : benchThreads) thread.stopThread();
 		for (Thread thread : threads) thread.join();
 
 		long endTime = System.currentTimeMillis();
@@ -395,6 +418,11 @@ public class Benchmark {
 
 	private void checkOpacity() throws InterruptedException {
 		if (!Parameters.sequentialReplayEnabled) return;
+
+		if (type == TOTAL_OPS) {
+			System.err.println("Sequential replay not available for total ops");
+			return;
+		}
 
 		System.err.println("\nReplaying the execution in a single thread...");
 
@@ -559,6 +587,8 @@ public class Benchmark {
 			"\t--no-traversals  -- do not use long traversals\n" +
 			"\t--no-rw-traversals  -- do not use read-write traversals\n" +
 			"\t--no-sms         -- do not use structural modification operations\n" +
+			"\t--ops numOps -- set the length of the benchmark, to numOps per threads (default: 50 ops per thread)\n" +
+			"\t--totalOps numTotalOps       -- set the length of the benchmark, to numTotalOps (default: 2400 ops)\n" +
 			"\t--warm-up seconds        -- Warms-up de benchmark (default: 60 seconds)\n" +
 			"\t--seq-replay 	-- replay the execution in a single thread\n" +
 			"\t                    (checks for opacity violations)\n" +

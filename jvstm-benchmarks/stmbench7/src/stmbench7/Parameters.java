@@ -8,6 +8,39 @@ import stmbench7.annotations.Immutable;
 @Immutable
 public class Parameters {
 
+	public enum ExecutionType {
+		NORMAL(10),
+		OPS_PER_TX(50),
+		TOTAL_OPS(2400);
+
+		public int _limit;
+
+		ExecutionType(int limit) {
+			setLimit(limit);
+		}
+
+		public void setLimit(int limit) {
+			_limit = limit;
+		}
+
+		public int getLimit() {
+			return _limit;
+		}
+
+		public String toString() {
+			switch(this) {
+			case NORMAL:
+				return _limit + " s";
+			case OPS_PER_TX:
+				return _limit + " ops per thread";
+			case TOTAL_OPS:
+				return _limit + " ops (total)";
+			default:
+				return "UNKOWN TYPE";
+			}
+		}
+	}
+
 	/**
 	 * OO7 benchmark parameters for the "medium" size of the benchmark. Can
 	 * be adjusted to match larger or smaller applications. Note: these
@@ -100,7 +133,7 @@ public class Parameters {
 	 */
 	public static WorkloadType workloadType = WorkloadType.READ_DOMINATED;
 	public static SynchronizationType synchronizationType = SynchronizationType.LOCK_COARSE;
-	public static int numThreads = 1, numSeconds = 10;
+	public static int numThreads = 1;
 	public static boolean longTraversalsEnabled = true,
 		structureModificationEnabled = true,
 		sequentialReplayEnabled = false,

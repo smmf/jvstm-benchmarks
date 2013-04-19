@@ -44,8 +44,8 @@ public class BenchThread implements Runnable {
 			this.localTs = localTs;
 		}
 
-		public int compareTo(ReplayLogEntry entry) {
-			int globalOrder = timestamp - entry.timestamp;
+		public int compareTo(ReplayLogEntry otherEntry) {
+			int globalOrder = timestamp - otherEntry.timestamp;
 			if (globalOrder != 0) {
 				return globalOrder;
 			}
@@ -54,15 +54,22 @@ public class BenchThread implements Runnable {
 			// same timestamp, meaning that both correspond to
 			// the same version of the transactional system.
 
-			if (entry == this) return 0;
+			if (otherEntry == this) return 0;
 
 			// If both entries were created by the same BenchThread,
 			// we use the execution order local to the thread to order them.
-			if (threadNum == entry.threadNum) {
-				return localTs - entry.localTs;
+			if (threadNum == otherEntry.threadNum) {
+				return localTs - otherEntry.localTs;
 			}
 
-			// At least one of the entries is read-only
+			// If both are read-only, we use the threadNum to order them.
+			// This is necessary to ensure that a.compareTo(b) is consistent
+			// with b.compareTo(a) .
+			if (readOnly && otherEntry.readOnly) {
+				return threadNum - otherEntry.threadNum;
+			}
+
+			// If we get here, one of the entries is read-only
 			// and is ordered last.
 			return readOnly ? 1 : -1;
 		}
@@ -96,22 +103,8 @@ public class BenchThread implements Runnable {
 
 	public void run() {
 		ID.set(this.myThreadNum);
-		int i = 0;
-		while (!stop) {
-			// if (i++ > 55) continue;
-			int operationNumber = getNextOperationNumber();
-
-			OperationType type = OperationId.values()[operationNumber]
-					.getType();
-			// if( (type != OperationType.SHORT_TRAVERSAL) )
-			// continue;
-			// (type != OperationType.SHORT_TRAVERSAL_RO) &&
-			// (type != OperationType.OPERATION) )
-			// continue;
-
-			// System.out.println(i + " > "
-			// + OperationId.values()[operationNumber]);
-
+		int operationNumber;
+		while (shouldContinue(operationNumber = getNextOperationNumber())) {
 			OperationExecutor currentExecutor = operations[operationNumber];
 			int result = 0;
 			boolean failed = false;
@@ -155,11 +148,15 @@ public class BenchThread implements Runnable {
 			}
 		}
 		System.err.println("Thread #" + myThreadNum + " finished.");
-		// i = 0;
+		// int i = 0;
 		// for (ReplayLogEntry entry : replayLog)
 		// System.out.println(i++ + " % " +
 		// OperationId.values()[entry.opNum]
 		// + " -- " + entry.timestamp);
+	}
+
+	protected boolean shouldContinue(int operationNumber) {
+		return !stop;
 	}
 
 	public void stopThread() {
